@@ -70,7 +70,7 @@ if (typeof window !== 'undefined') {
   abortController = new AbortController()
 }
 
-function createStorageExplorerState({
+export function createStorageExplorerState({
   projectRef,
   connectionString,
   bucket,
@@ -164,6 +164,9 @@ function createStorageExplorerState({
 
     isSearching: false,
     setIsSearching: (value: boolean) => (state.isSearching = value),
+
+    itemSearchString: '',
+    setItemSearchString: (value: string) => (state.itemSearchString = value),
 
     isRefreshing: false,
 
@@ -397,7 +400,7 @@ function createStorageExplorerState({
 
     refetchAllOpenedFolders: async () => {
       const paths = state.openedFolders.map((folder) => folder.name)
-      await state.fetchFoldersByPath({ paths })
+      await state.fetchFoldersByPath({ paths, searchString: state.itemSearchString })
     },
 
     refreshAll: async () => {

@@ -1,7 +1,7 @@
 import { useDebounce } from '@uidotdev/usehooks'
 import { useParams } from 'common'
 import { compact, get, isEmpty, uniqBy } from 'lodash'
-import { useCallback, useEffect, useEffectEvent, useRef, useState } from 'react'
+import { useCallback, useEffect, useEffectEvent, useRef } from 'react'
 
 import { useSelectedBucket } from '../FilesBuckets/useSelectedBucket'
 import { STORAGE_ROW_TYPES, STORAGE_VIEWS } from '../Storage.constants'
@@ -41,6 +41,8 @@ export const StorageExplorer = () => {
     setSelectedFilePreview,
     setSelectedItemsToMove,
     setIsSearching,
+    itemSearchString,
+    setItemSearchString,
   } = useStorageExplorerStateSnapshot()
   const { view } = useStoragePreference(projectRef)
 
@@ -51,15 +53,14 @@ export const StorageExplorer = () => {
   // This happens because the bucket query and effects that update the store run after the first render.
   const isLoading = isBucketQueryLoading || (!!bucketId && bucketId !== selectedBucket.id)
 
-  // This state exists outside of the header because FileExplorerColumn needs to listen to these as well
-  // Things like showing results from a search filter is "temporary", hence we use react state to manage
-  const [itemSearchString, setItemSearchString] = useState('')
+  // The search string lives in the store so that refetches triggered by mutations (deleting,
+  // uploading, moving files) keep filtering on it instead of resetting the column to every object
   const debouncedSearchString = useDebounce(itemSearchString, 500)
 
   const handleClearSearch = useCallback(() => {
     setIsSearching(false)
     setItemSearchString('')
-  }, [setIsSearching])
+  }, [setIsSearching, setItemSearchString])
 
   useStorageExplorerShortcuts({ onClearSearch: handleClearSearch })
 
