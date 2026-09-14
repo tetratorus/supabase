@@ -1400,11 +1400,9 @@ Rotate `JWT_SECRET` as well if untrusted roles had access to the database.
 select sign(payload, current_setting('app.settings.jwt_secret'));
 ```
 
-fail with `unrecognized configuration parameter` once the setting is gone. Sign tokens outside the database where possible, or pass the secret in explicitly from the caller. If a database-side secret is unavoidable, store it under your own setting name and restrict who can read it, rather than putting it back on a database-wide setting that every role can read:
+fail with `unrecognized configuration parameter` once the setting is gone. Sign tokens outside the database, or pass the secret in from the caller as a function argument so it lives only in the transaction that needs it.
 
-```sql
-alter role my_signing_role set "myapp.jwt_secret" to '<secret>';
-```
+Do not move the secret to another configuration parameter. `alter database ... set` and `alter role ... set` store the value in the catalog, where role settings are readable by any role through `pg_roles.rolconfig`.
 
 ---
 
