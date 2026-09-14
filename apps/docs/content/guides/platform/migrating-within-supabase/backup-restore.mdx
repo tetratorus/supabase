@@ -276,7 +276,11 @@ ERROR:  permission denied for sequence key_key_id_seq
 
 Alternatively, exclude them when you dump: `supabase db dump ... -x "pgsodium.key" -x "vault.secrets"`.
 
-Skipping these tables does not lose your encrypted column data, as long as you copy the root encryption key to the new project as described in step 5 of the restore. Vault secrets are not carried over by the dump, so re-create them in the new project with [`vault.create_secret()`](/docs/guides/database/vault).
+Skipping these tables drops the key records in `pgsodium.key` and every row in `vault.secrets`, so before you pause or delete the old project:
+
+- Copy the root encryption key to the new project as described in step 5 of the restore.
+- Export the values you still need from `vault.decrypted_secrets` (name, description, and decrypted value) to a secure location, and re-create them in the new project with [`vault.create_secret()`](/docs/guides/database/vault). The dump can't carry them over, and the root key alone can't reconstruct a row that was never restored.
+- If you use pgsodium keys other than the default — custom or derived keys referenced by encrypted columns — those key records are also skipped, and the affected columns can't be decrypted in the new project. Contact [support](https://supabase.help) before migrating.
 
 #### `cli_login_postgres` role grant error
 
