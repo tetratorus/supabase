@@ -211,57 +211,66 @@ export function useCreateCommands(options?: CommandOptions) {
     () =>
       edgeFunctionsEnabled
         ? ([
-            {
-              id: 'create-edge-function-editor',
-              name: 'Create Edge Function via Editor',
-              route: `/project/${ref}/functions/new`,
-              icon: () => <EdgeFunctions />,
-            },
+            ...(IS_PLATFORM
+              ? [
+                  {
+                    id: 'create-edge-function-editor',
+                    name: 'Create Edge Function via Editor',
+                    route: `/project/${ref}/functions/new`,
+                    icon: () => <EdgeFunctions />,
+                  },
+                ]
+              : []),
             {
               id: 'create-edge-function-cli',
               name: 'Create Edge Function via CLI',
               route: `/project/${ref}/functions?create=cli`,
               icon: () => <EdgeFunctions />,
             },
-            {
-              id: 'create-edge-function-ai',
-              name: 'Create Edge Function via AI',
-              action: () => {
-                openSidebar(SIDEBAR_KEYS.AI_ASSISTANT)
-                snap.newChat({
-                  name: 'Create new edge function',
-                  initialInput: `Create a new edge function that ...`,
-                  suggestions: {
-                    title:
-                      'I can help you create a new edge function. Here are a few example prompts to get you started:',
-                    prompts: [
-                      {
-                        label: 'Stripe Payments',
-                        description:
-                          'Create a new edge function that processes payments with Stripe',
-                      },
-                      {
-                        label: 'Email with Resend',
-                        description: 'Create a new edge function that sends emails with Resend',
-                      },
-                      {
-                        label: 'PDF Generator',
-                        description:
-                          'Create a new edge function that generates PDFs from HTML templates',
-                      },
-                    ],
+            ...(IS_PLATFORM
+              ? [
+                  {
+                    id: 'create-edge-function-ai',
+                    name: 'Create Edge Function via AI',
+                    action: () => {
+                      openSidebar(SIDEBAR_KEYS.AI_ASSISTANT)
+                      snap.newChat({
+                        name: 'Create new edge function',
+                        initialInput: `Create a new edge function that ...`,
+                        suggestions: {
+                          title:
+                            'I can help you create a new edge function. Here are a few example prompts to get you started:',
+                          prompts: [
+                            {
+                              label: 'Stripe Payments',
+                              description:
+                                'Create a new edge function that processes payments with Stripe',
+                            },
+                            {
+                              label: 'Email with Resend',
+                              description:
+                                'Create a new edge function that sends emails with Resend',
+                            },
+                            {
+                              label: 'PDF Generator',
+                              description:
+                                'Create a new edge function that generates PDFs from HTML templates',
+                            },
+                          ],
+                        },
+                      })
+                      setIsOpen(false)
+                    },
+                    icon: () => (
+                      <AiIconAnimation
+                        allowHoverEffect={false}
+                        size={20}
+                        className="text-foreground-light"
+                      />
+                    ),
                   },
-                })
-                setIsOpen(false)
-              },
-              icon: () => (
-                <AiIconAnimation
-                  allowHoverEffect={false}
-                  size={20}
-                  className="text-foreground-light"
-                />
-              ),
-            },
+                ]
+              : []),
             {
               id: 'create-edge-function-secret',
               name: 'Create Edge Function Secret',

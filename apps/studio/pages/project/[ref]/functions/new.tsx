@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useParams } from 'common'
+import { IS_PLATFORM, useParams } from 'common'
 import { isEqual } from 'lodash'
 import { AlertCircle, Book, Check } from 'lucide-react'
 import { useRouter } from 'next/router'
@@ -276,11 +276,19 @@ const NewFunctionPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [template])
 
+  useEffect(() => {
+    if (!IS_PLATFORM && ref) {
+      router.replace(`/project/${ref}/functions`)
+    }
+  }, [ref, router])
+
   const hasUnsavedChanges = useMemo(() => !isEqual(INITIAL_FILES, files), [files])
   const { handleCancelNavigation, handleConfirmNavigation, shouldConfirmNavigation } =
     usePreventNavigationOnUnsavedChanges({
-      hasChanges: hasUnsavedChanges && !hasDeployed,
+      hasChanges: IS_PLATFORM && hasUnsavedChanges && !hasDeployed,
     })
+
+  if (!IS_PLATFORM) return null
 
   return (
     <PageLayout

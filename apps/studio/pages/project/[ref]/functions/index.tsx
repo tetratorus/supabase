@@ -71,7 +71,7 @@ const EdgeFunctionsPage: NextPageWithLayout = () => {
     setSearch,
     sort,
     setSort: setSortQueryParam,
-    canCreateNew: isProjectActive,
+    canCreateNew: IS_PLATFORM && isProjectActive,
     onCreateNew: () => router.push(`/project/${ref}/functions/new`),
     onRefresh: () => {
       refetch()
