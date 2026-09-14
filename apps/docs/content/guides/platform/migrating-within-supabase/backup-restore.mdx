@@ -67,8 +67,10 @@ breadcrumb: 'Migrations'
         ```
 
         ```bash
-        supabase db dump --db-url [CONNECTION_STRING] -f data.sql --use-copy --data-only -x "storage.buckets_vectors" -x "storage.vector_indexes"
+        supabase db dump --db-url [CONNECTION_STRING] -f data.sql --use-copy --data-only -x "storage.buckets_vectors" -x "storage.vector_indexes" -x "pgsodium.key" -x "vault.secrets"
         ```
+
+        `pgsodium.key` and `vault.secrets` are excluded because the role that runs the restore can't write to them. If you use [Supabase Vault](/docs/guides/database/vault) or encrypted columns, read the `pgsodium` and `vault` troubleshooting note before you pause or delete the old project.
       </StepHikeCompact.Details>
     </StepHikeCompact.Step>
 
@@ -261,6 +263,26 @@ If you encounter permission errors related to `supabase_admin` during restore:
 ```sql
   ALTER ... OWNER TO "supabase_admin"
 ```
+
+#### `pgsodium` and `vault` permission errors
+
+The `postgres` role that runs the restore can't write to `pgsodium.key` or `vault.secrets`. If your data dump contains these tables, the restore fails with errors such as:
+
+```sh
+ERROR:  permission denied for table key
+ERROR:  permission denied for sequence key_key_id_seq
+```
+
+The data dump command in step 5 of the backup already excludes both tables. If your dump was taken without those exclusions, either re-run it with `-x "pgsodium.key" -x "vault.secrets"`, or:
+
+- Open `data.sql`
+- Comment out the `COPY "pgsodium"."key"` and `COPY "vault"."secrets"` blocks, along with any `setval` call for `pgsodium.key_key_id_seq`
+
+Excluded rows aren't restored, so before you pause or delete the old project:
+
+- Copy the root encryption key to the new project as described in step 5 of the restore.
+- Export the Vault secrets you still need from `vault.decrypted_secrets` (name, description, and decrypted value) to a secure location, then re-create them in the new project with [`vault.create_secret()`](/docs/guides/database/vault). The root key alone can't reconstruct a row that was never restored.
+- If encrypted columns reference pgsodium keys other than the project's default key, their key records in `pgsodium.key` aren't restored either. Contact [support](https://supabase.help) before migrating.
 
 #### `cli_login_postgres` role grant error
 
