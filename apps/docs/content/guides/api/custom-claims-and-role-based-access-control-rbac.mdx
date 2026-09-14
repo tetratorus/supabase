@@ -63,11 +63,11 @@ revoke all
 
 Both tables decide what a user is allowed to do, so clients must not read or write them through the [data APIs](/docs/guides/api). With Row Level Security enabled, `anon` and `authenticated` are denied access because no policy grants it to them. The only policy these tables need is the one for `supabase_auth_admin` in the Auth Hook migration below.
 
-The `authorize` function you create later still reads `role_permissions`, because it runs as its owner and a table's owner is exempt from RLS by default. Create these objects as the role that owns the tables, and don't add `force row level security`, or `authorize` returns `false` for every user.
+The `authorize` function you create later still reads `role_permissions` because a `security definer` function runs as its owner, and in this guide that owner is `postgres`, which has `bypassrls`. A function owned by a role without `bypassrls` reads the table only if it owns it, and only while the table isn't set to `force row level security`.
 
 <Admonition type="caution">
 
-Apply the Auth Hook migration below in the same deployment. The hook reads `user_roles` as `supabase_auth_admin`, and until that migration grants it access, the hook silently issues tokens with a `null` `user_role`, so every `authorize` check fails.
+Enabling RLS on `user_roles` is only safe together with the `supabase_auth_admin` policy in the Auth Hook migration below. If the hook is already deployed without that policy, its `select` returns no rows once RLS is on, and tokens ship with `user_role` set to `null` instead of failing.
 
 </Admonition>
 
