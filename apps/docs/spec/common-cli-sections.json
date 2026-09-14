@@ -271,7 +271,7 @@
           },
           {
             "id": "supabase-inspect-db-index-stats",
-            "title": "Show sizes of individual indexes",
+            "title": "Show index stats",
             "slug": "supabase-inspect-db-index-stats",
             "type": "cli-command"
           },
@@ -301,13 +301,13 @@
           },
           {
             "id": "supabase-inspect-db-role-stats",
-            "title": "Show number of active connections",
+            "title": "Show role stats",
             "slug": "supabase-inspect-db-role-stats",
             "type": "cli-command"
           },
           {
             "id": "supabase-inspect-db-table-stats",
-            "title": "Show sizes of individual tables",
+            "title": "Show table stats",
             "slug": "supabase-inspect-db-table-stats",
             "type": "cli-command"
           },
