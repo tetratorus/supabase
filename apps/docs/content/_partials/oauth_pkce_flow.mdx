@@ -1,6 +1,10 @@
 For a PKCE flow, for example in Server-Side Auth, you need an extra step to handle the code exchange. When calling `signInWithOAuth`, provide a `redirectTo` URL which points to a callback route. This redirect URL should be added to your [redirect allow list](/docs/guides/auth/redirect-urls).
 
-The clients created by `@supabase/ssr` use the PKCE flow by default. If you create the client with `createClient` from `@supabase/supabase-js`, set `flowType: 'pkce'` in the `auth` options. The default is the [implicit flow](/docs/guides/auth/sessions/implicit-flow), which redirects to your callback with the tokens in the URL fragment (`#access_token=...`) instead of a `code` query parameter.
+<Admonition type="note">
+
+The server-side callback below requires a client from `@supabase/ssr` on both the sign-in and callback sides. These clients use the PKCE flow and store the code verifier in cookies, so the callback can complete the exchange. A client created with `createClient` from `@supabase/supabase-js` defaults to the [implicit flow](/docs/guides/auth/sessions/implicit-flow), which redirects to your callback with the tokens in the URL fragment (`#access_token=...`) instead of a `code` query parameter. Setting `flowType: 'pkce'` on such a client only works when the same client completes the exchange, for example in the browser with `detectSessionInUrl` or by calling `exchangeCodeForSession`, because the [code verifier is stored locally](/docs/guides/auth/sessions/pkce-flow#limitations).
+
+</Admonition>
 
 <Tabs
   scrollable
@@ -15,9 +19,7 @@ In the browser, `signInWithOAuth` automatically redirects to the OAuth provider'
 
 ```js
 import { createClient, type Provider } from '@supabase/supabase-js';
-const supabase = createClient('https://your-project-id.supabase.co', 'sb_publishable_...', {
-  auth: { flowType: 'pkce' },
-})
+const supabase = createClient('https://your-project-id.supabase.co', 'sb_publishable_...')
 const provider = 'provider' as Provider
 
 // ---cut---
@@ -37,9 +39,7 @@ In the server, you need to handle the redirect to the OAuth provider's authentic
 
 ```js
 import { createClient, type Provider } from '@supabase/supabase-js'
-const supabase = createClient('https://your-project-id.supabase.co', 'sb_publishable_...', {
-  auth: { flowType: 'pkce' },
-})
+const supabase = createClient('https://your-project-id.supabase.co', 'sb_publishable_...')
 const provider = 'provider' as Provider
 const redirect = (url: string) => {}
 
