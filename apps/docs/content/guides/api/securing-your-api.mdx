@@ -30,7 +30,7 @@ To apply these controls, see [Grant access explicitly](#grant-access-explicitly)
 
 ### Default privileges
 
-On existing projects, tables created in `public` receive `SELECT`, `INSERT`, `UPDATE`, and `DELETE` privileges for `anon`, `authenticated`, and `service_role` by default. Functions receive `EXECUTE`. These grants make new objects reachable through the Data API, even when you don't intend to expose them.
+On existing projects, tables created in `public` receive `ALL` privileges (`SELECT`, `INSERT`, `UPDATE`, `DELETE`, `TRUNCATE`, `REFERENCES`, and `TRIGGER`) for `anon`, `authenticated`, and `service_role` by default. Functions receive `EXECUTE`. These grants make new objects reachable through the Data API, even when you don't intend to expose them.
 
 Supabase is changing the platform default to revoke these automatic grants so that exposure becomes opt-in. See [the platform defaults discussion](https://github.com/orgs/supabase/discussions/45329) in the Supabase GitHub discussions.
 
@@ -177,7 +177,7 @@ Revoke automatic grants when you want new objects in `public` to remain inaccess
 
    ```sql
    alter default privileges for role postgres in schema public
-     revoke select, insert, update, delete on tables from anon, authenticated, service_role;
+     revoke all on tables from anon, authenticated, service_role;
 
    alter default privileges for role postgres in schema public
      revoke execute on functions from anon, authenticated, service_role;
