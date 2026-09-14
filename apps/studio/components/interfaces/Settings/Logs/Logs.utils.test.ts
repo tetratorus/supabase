@@ -299,6 +299,20 @@ describe('Logs.utils', () => {
     })
   })
 
+  describe('filter keys inherited from Object.prototype', () => {
+    const payload = '1=1) or true --'
+
+    test.each(['constructor', 'toString', 'valueOf', 'hasOwnProperty', '__proto__'])(
+      '%s is treated as an unknown key and its value is escaped',
+      (key) => {
+        const filters = JSON.parse(`{"${key}":${JSON.stringify(payload)}}`) as Filters
+        const sql = genDefaultQuery(LogsTableName.EDGE, filters, 100)
+        expect(sql).not.toContain(`(${payload})`)
+        expect(sql).toContain(`'${payload}'`)
+      }
+    )
+  })
+
   describe('checkForLimitClause', () => {
     test('detects a limit clause regardless of casing', () => {
       expect(checkForLimitClause('select event_message from edge_logs limit 100')).toBe(true)
