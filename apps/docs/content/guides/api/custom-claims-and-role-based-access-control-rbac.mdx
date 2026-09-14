@@ -57,13 +57,13 @@ alter table public.user_roles enable row level security;
 alter table public.role_permissions enable row level security;
 
 revoke all
-  on table public.role_permissions
+  on table public.user_roles, public.role_permissions
   from authenticated, anon, public;
 ```
 
-Both tables decide what a user is allowed to do, so clients must not read or write them through the [data APIs](/docs/guides/api). With Row Level Security enabled, `anon` and `authenticated` are denied access because no policy grants it to them. The only policy these tables need is the one for `supabase_auth_admin` in the Auth Hook migration below.
+Both tables decide what a user is allowed to do, so clients must not read or write them through the [data APIs](/docs/guides/api). The `revoke` removes the table privileges that `anon` and `authenticated` receive by default on tables in `public`, and enabling Row Level Security denies row access to any role that keeps a privilege but has no policy. The only policy these tables need is the one for `supabase_auth_admin` in the Auth Hook migration below.
 
-The `authorize` function you create later still reads `role_permissions` because a `security definer` function runs as its owner, and in this guide that owner is `postgres`, which has `bypassrls`. A function owned by a role without `bypassrls` reads the table only if it owns it, and only while the table isn't set to `force row level security`.
+The `authorize` function you create later still reads `role_permissions` because a `security definer` function runs as its owner. On Supabase projects that owner is `postgres`, which has `bypassrls`. If you create the function as another role, that role needs `bypassrls`, must own the table (and the table must not use `force row level security`), or needs its own policy on `role_permissions`. Otherwise `authorize` returns `false` for every user without raising an error.
 
 <Admonition type="caution">
 
@@ -146,10 +146,6 @@ revoke execute
 grant all
   on table public.user_roles
 to supabase_auth_admin;
-
-revoke all
-  on table public.user_roles
-  from authenticated, anon, public;
 
 create policy "Allow auth admin to read user roles" ON public.user_roles
 as permissive for select
