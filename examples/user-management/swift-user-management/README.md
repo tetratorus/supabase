@@ -1,10 +1,10 @@
 # Supabase Swift User Management
 
-This repo is a quick sample of how you can get started building apps using Swift and Supabase. You can find a step by step guide of how to build out this app in the [Quickstart: Swift guide](https://supabase.com/docs/guides/getting-started/quickstarts/ios-swiftui).
+This repo is a quick sample of how you can get started building apps using Swift and Supabase. You can find a step by step guide of how to build out this app in the [Build a User Management App with Swift and SwiftUI](https://supabase.com/docs/guides/getting-started/tutorials/with-swift) tutorial.
 
 This repo will demonstrate how to:
 
-- Sign users in with Supabase Auth using [magic link](https://supabase.com/docs/reference/dart/auth-signinwithotp)
+- Sign users in with Supabase Auth using [magic link](https://supabase.com/docs/reference/swift/auth-signinwithotp)
 - Store and retrieve data with [Supabase database](https://supabase.com/docs/guides/database)
 - Store image files in [Supabase storage](https://supabase.com/docs/guides/storage)
 
@@ -12,7 +12,9 @@ This repo will demonstrate how to:
 
 ## Getting Started
 
-Run `cp .env.example .env` and fill in [your credentials](https://supabase.com/docs/guides/with-flutter#get-the-api-keys).
+Run `cp .env.example .env` and fill in [your credentials](https://supabase.com/docs/guides/getting-started/tutorials/with-swift#get-api-details).
+
+The app signs users in with a magic link that redirects back to the app via the `io.supabase.user-management://login-callback` deep link. Add this URL to your project's [redirect URLs](https://supabase.com/dashboard/project/_/auth/url-configuration) so the link returns to the app. If you run Supabase locally with `supabase start`, it is already included in `supabase/config.toml`. See [deep link handling](https://supabase.com/docs/guides/auth/native-mobile-deep-linking?platform=swift) for details.
 
 Run the application in a device or simulator using Xcode.
 
