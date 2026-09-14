@@ -137,6 +137,26 @@ describe('TableEntity.utils: formatTableRowsToSQL', () => {
     expect(result).toBe(expected)
   })
 
+  it('should escape double quotes in schema, table and column names', () => {
+    const table: SupaTable = {
+      id: 1,
+      type: ENTITY_TYPE.TABLE,
+      columns: [
+        { name: 'id', dataType: 'bigint', format: 'int8', position: 0 },
+        { name: 'first"name', dataType: 'text', format: 'text', position: 1 },
+      ],
+      name: 'customer"name',
+      schema: 'my"schema',
+      comment: undefined,
+      estimateRowCount: 1,
+    }
+    const rows = [{ id: 1, 'first"name': 'Person 1' }]
+
+    const result = formatTableRowsToSQL(table, rows)
+    const expected = `INSERT INTO "my""schema"."customer""name" ("id", "first""name") VALUES (1, 'Person 1');`
+    expect(result).toBe(expected)
+  })
+
   it('should return an empty string for empty rows', () => {
     const table: SupaTable = {
       id: 1,

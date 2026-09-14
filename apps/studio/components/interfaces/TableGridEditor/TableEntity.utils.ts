@@ -34,10 +34,18 @@ export const getTablePoliciesUrl = (
   )}&schema=${encodeURIComponent(schema ?? '')}`
 }
 
+/**
+ * Double quote a Postgres identifier, escaping any double quotes it contains
+ *
+ * Postgres allows double quotes inside quoted identifiers as long as they are doubled up,
+ * so `a"b` has to be written as `"a""b"`
+ */
+const quoteIdentifier = (identifier: string): string => `"${identifier.replaceAll('"', '""')}"`
+
 export const formatTableRowsToSQL = (table: SupaTable, rows: any[]) => {
   if (rows.length === 0) return ''
 
-  const columns = table.columns.map((col) => `"${col.name}"`).join(', ')
+  const columns = table.columns.map((col) => quoteIdentifier(col.name)).join(', ')
 
   const valuesSets = rows
     .map((row) => {
@@ -78,7 +86,7 @@ export const formatTableRowsToSQL = (table: SupaTable, rows: any[]) => {
     })
     .join(', ')
 
-  return `INSERT INTO "${table.schema}"."${table.name}" (${columns}) VALUES ${valuesSets};`
+  return `INSERT INTO ${quoteIdentifier(String(table.schema))}.${quoteIdentifier(table.name)} (${columns}) VALUES ${valuesSets};`
 }
 
 /**
