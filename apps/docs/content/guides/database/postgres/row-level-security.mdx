@@ -61,6 +61,8 @@ On existing projects, a new table in `public` starts with every privilege alread
 
 Adding policies doesn't take those grants back. A table protected only by policies still hands `anon` an insert path if you never revoke the grant.
 
+The automatic grant is `all privileges`, so it also includes `truncate`, `references`, and `trigger`. Policies don't apply to `truncate`: on a table with RLS enabled and no policies, `delete` removes nothing, but `truncate` empties the table. `revoke all` removes that privilege along with the rest.
+
 Not every project grants these automatically. See [Default privileges](/docs/guides/api/securing-your-api#default-privileges). Grant each role only the operations it needs.
 
 A missing grant raises a `42501` error before any policy runs. When a request fails that your policy should allow, check the grants before you change the policy. To set them, see [Enable RLS and set the grants](#enable-rls-and-set-the-grants).
