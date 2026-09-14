@@ -31,7 +31,7 @@ For a serverless deployment, add `directUrl = env("DIRECT_URL")` so migrations r
 
 If your v6 project has a `prisma.config.ts`, its `datasource.url` takes precedence over the schema block, so set the migration URL there or delete the file.
 
-Otherwise follow this guide as written, with these changes: skip step 4, skip the `@prisma/adapter-pg` and `pg` installs in step 2, and construct `new PrismaClient()` from `@prisma/client` without the `adapter` argument in step 6.
+Otherwise follow this guide as written, with these changes: skip step 4, skip the `@prisma/adapter-pg` and `pg` installs in step 2, and in step 6 keep the generated-client import but drop the `PrismaPg` import, the adapter, and the `adapter` argument.
 
 To move an existing project onto v7, follow [Prisma's upgrade guide](https://www.prisma.io/docs/orm/more/upgrade-guides/upgrading-versions/upgrading-to-prisma-7).
 
@@ -210,7 +210,7 @@ To move an existing project onto v7, follow [Prisma's upgrade guide](https://www
   <StepHikeCompact.Step step={4}>
     <StepHikeCompact.Details title="Configure your Prisma config file">
 
-    `prisma init` generates the config file next to your `package.json`, named `prisma7.config.ts` on Prisma 7.10 and `prisma.config.ts` on earlier releases. The CLI loads either name, preferring `prisma7.config.*`.
+    `prisma init` generates the config file next to your `package.json`. Recent v7 releases name it `prisma7.config.ts` and earlier ones name it `prisma.config.ts`; edit whichever file your CLI generated. The examples below show `prisma7.config.ts`.
 
     Make sure it starts with `import "dotenv/config"` so your `.env` file is read. If you are using a serverless environment, change the data source URL to `DIRECT_URL`, because the Prisma CLI uses it to run migrations.
 
