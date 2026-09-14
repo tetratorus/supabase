@@ -1,15 +1,20 @@
-import { render, screen } from '@testing-library/react'
+import { screen } from '@testing-library/react'
+import { http, HttpResponse } from 'msw'
 import type { ReactNode } from 'react'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { AuthProvidersLayout } from './AuthProvidersLayout'
+import { BASE_PATH } from '@/lib/constants'
+import { customRender } from '@/tests/lib/custom-render'
+import { mswServer } from '@/tests/lib/msw'
+import { createMockProfileContext } from '@/tests/lib/profile-helpers'
 
 const { mockIsPlatform } = vi.hoisted(() => ({
   mockIsPlatform: { value: true },
 }))
 
-vi.mock('@/lib/constants', async () => {
-  const actual = await vi.importActual<Record<string, unknown>>('@/lib/constants')
+vi.mock('@/lib/constants', async (importOriginal) => {
+  const actual = await importOriginal<Record<string, unknown>>()
   return {
     ...actual,
     get IS_PLATFORM() {
@@ -18,34 +23,27 @@ vi.mock('@/lib/constants', async () => {
   }
 })
 
-vi.mock('@/hooks/misc/useIsFeatureEnabled', () => ({
-  useIsFeatureEnabled: () => ({
-    authenticationSignInProviders: true,
-    authenticationThirdPartyAuth: true,
-  }),
-}))
-
-vi.mock('common', async () => {
-  const actual = await vi.importActual<typeof import('common')>('common')
-  return {
-    ...actual,
-    useParams: () => ({ ref: 'default' }),
-  }
-})
-
 vi.mock('./AuthLayout', () => ({
-  __esModule: true,
   default: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }))
 
 describe('AuthProvidersLayout', () => {
+  beforeEach(() => {
+    mswServer.use(
+      http.get(`${BASE_PATH}/api/enabled-features-overrides`, () =>
+        HttpResponse.json({ disabled_features: [] })
+      )
+    )
+  })
+
   it('renders the providers content on platform', () => {
     mockIsPlatform.value = true
 
-    render(
+    customRender(
       <AuthProvidersLayout>
         <div>providers content</div>
-      </AuthProvidersLayout>
+      </AuthProvidersLayout>,
+      { profileContext: createMockProfileContext() }
     )
 
     expect(screen.getByText('providers content')).toBeInTheDocument()
@@ -54,10 +52,11 @@ describe('AuthProvidersLayout', () => {
   it('renders the unknown interface when self-hosted', () => {
     mockIsPlatform.value = false
 
-    render(
+    customRender(
       <AuthProvidersLayout>
         <div>providers content</div>
-      </AuthProvidersLayout>
+      </AuthProvidersLayout>,
+      { profileContext: createMockProfileContext() }
     )
 
     expect(screen.queryByText('providers content')).not.toBeInTheDocument()
