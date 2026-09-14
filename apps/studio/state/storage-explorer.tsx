@@ -38,7 +38,10 @@ import { configKeys } from '@/data/config/keys'
 import { useProjectApiUrl } from '@/data/config/project-endpoint-query'
 import type { ProjectStorageConfigResponse } from '@/data/config/project-storage-config-query'
 import { getQueryClient } from '@/data/query-client'
-import { deleteBucketObject } from '@/data/storage/bucket-object-delete-mutation'
+import {
+  deleteBucketObject,
+  getDeleteObjectsResult,
+} from '@/data/storage/bucket-object-delete-mutation'
 import { signBucketObjects } from '@/data/storage/bucket-object-sign-mutation'
 import { listBucketObjects, StorageObject } from '@/data/storage/bucket-objects-list-mutation'
 import { deleteBucketPrefix } from '@/data/storage/bucket-prefix-delete-mutation'
@@ -1462,16 +1465,19 @@ function createStorageExplorerState({
       const toastId = toast.loading(`Deleting ${prefixes.length} file(s)...`)
 
       try {
-        await deleteBucketObject({
+        const data = await deleteBucketObject({
           projectRef: state.projectRef,
           bucketId: state.selectedBucket.id,
           paths: prefixes,
         })
 
+        const result = getDeleteObjectsResult(prefixes, data)
+        const deletedPaths = result.status === 'unknown' ? prefixes : result.deletedPaths
+
         if (!isDeleteFolder) {
           // If parent folders are empty, reinstate .emptyFolderPlaceholder to persist them
           const parentFolderPrefixes = uniq(
-            prefixes.map((prefix) => {
+            deletedPaths.map((prefix) => {
               const segments = prefix.split('/')
               return segments.slice(0, segments.length - 1).join('/')
             })
@@ -1480,16 +1486,36 @@ function createStorageExplorerState({
             parentFolderPrefixes.map((prefix) => state.validateParentFolderEmpty(prefix))
           )
 
-          toast.success(`Successfully deleted ${prefixes.length} file(s)`, {
-            id: toastId,
-            closeButton: true,
-            duration: SONNER_DEFAULT_DURATION,
-            description: undefined,
-          })
+          if (result.status === 'partial') {
+            toast.error(
+              `${result.undeletedPaths.length} of ${prefixes.length} file(s) were not deleted`,
+              {
+                id: toastId,
+                closeButton: true,
+                duration: SONNER_DEFAULT_DURATION,
+                description: "Check that the bucket's storage policies allow deleting them.",
+              }
+            )
+          } else {
+            toast.success(`Successfully deleted ${prefixes.length} file(s)`, {
+              id: toastId,
+              closeButton: true,
+              duration: SONNER_DEFAULT_DURATION,
+              description: undefined,
+            })
+          }
+
           await state.refetchAllOpenedFolders()
           state.setSelectedItemsToDelete([])
         } else {
           toast.dismiss(toastId)
+
+          if (result.status === 'partial') {
+            await state.refetchAllOpenedFolders()
+            throw new Error(
+              `${result.undeletedPaths.length} of ${prefixes.length} file(s) were not deleted. Check that the bucket's storage policies allow deleting them.`
+            )
+          }
         }
       } catch (err) {
         if (!isDeleteFolder) {
