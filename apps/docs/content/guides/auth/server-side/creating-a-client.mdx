@@ -294,56 +294,75 @@ You can now use any Supabase features from your client or server code!
 </TabPanel>
 <TabPanel id="sveltekit" label="SvelteKit">
 
-### Set up server-side hooks
+### Write utility functions to create Supabase clients
 
-Set up server-side hooks in `src/hooks.server.ts`. The hooks:
+To access Supabase from a SvelteKit app, you need 2 types of Supabase clients:
 
-- Create a request-specific Supabase client, using the user credentials from the request cookie. This client is used for server-only code.
-- Check user authentication.
-- Guard protected pages.
+1. **Browser client** - To access Supabase from Svelte components and universal `load` functions running in the browser.
+2. **Server client** - To access Supabase from server `load` functions, form actions, server endpoints, and remote functions, which run only on the server.
+
+The server client reads the current request with [`getRequestEvent`](https://svelte.dev/docs/kit/$app-server#getRequestEvent) from `$app/server`, so you can call `createClient()` anywhere on the server without passing the event around or storing the client in `event.locals`. `getRequestEvent` requires SvelteKit 2.20 or later.
 
 <$Partial path="auth_methods.mdx" />
 
-<$CodeSample
-path="/auth/sveltekit/src/hooks.server.ts"
-meta="name=src/hooks.server.ts"
-language="typescript"
-/>
+Create a `src/lib/supabase` folder with a file for each type of client. Then copy the utility functions for each client type.
 
-To prevent TypeScript errors, add type definitions for the new event.locals properties.
+<div className="mt-12">
+  <$CodeTabs>
+    <$CodeSample
+      path="/auth/sveltekit/src/lib/supabase/client.ts"
+      meta="name=src/lib/supabase/client.ts"
+      language="typescript"
+    />
+    <$CodeSample
+      path="/auth/sveltekit/src/lib/supabase/server.ts"
+      meta="name=src/lib/supabase/server.ts"
+      language="typescript"
+    />
+  </$CodeTabs>
+</div>
 
-<$CodeSample
-path="/auth/sveltekit/src/app.d.ts"
-meta="name=src/app.d.ts"
-language="typescript"
-/>
+### Use the clients
 
-### Create a Supabase client in your root layout
+Import the server client in server-only code and the browser client in components:
 
-Create a Supabase client in your root `+layout.ts`. This client can be used to access Supabase from the client or the server. In order to get access to the Auth token on the server, use a `+layout.server.ts` file to pass in the session from event.locals.
+```ts src/routes/+page.server.ts
+import { createClient } from '$lib/supabase/server'
 
-Page components can access the Supabase client from the `data` object using the `load` function.
+import type { PageServerLoad } from './$types'
 
-<$CodeTabs>
-<$CodeSample
-path="/auth/sveltekit/src/routes/+layout.ts"
-meta="name=src/routes/+layout.ts"
-language="typescript"
-/>
+export const load: PageServerLoad = async () => {
+  const supabase = createClient()
+  const { data: claims } = await supabase.auth.getClaims()
 
-<$CodeSample
-path="/auth/sveltekit/src/routes/+layout.server.ts"
-meta="name=src/routes/+layout.server.ts"
-language="typescript"
-/>
-</$CodeTabs>
+  return { user: claims?.claims }
+}
+```
+
+```svelte src/routes/+page.svelte
+<script lang="ts">
+  import { createClient } from '$lib/supabase/client'
+
+  const supabase = createClient()
+</script>
+```
+
+<Admonition type="danger">
+
+Be careful when protecting pages. The server gets the user session from the cookies, which can be spoofed by anyone.
+
+Always use `supabase.auth.getClaims()` to protect pages and user data.
+
+_Never_ trust `supabase.auth.getSession()` inside server code. It isn't guaranteed to revalidate the Auth token.
+
+</Admonition>
 
 ## Congratulations
 
 You're done! To recap, you've successfully:
 
-- Set up server-side hooks to create a request-specific Supabase client and guard protected pages.
-- Created a Supabase client in your root layout to use on both the client and server.
+- Set up a Supabase server client utility for server `load` functions, form actions, server endpoints, and remote functions.
+- Set up a Supabase browser client utility for Svelte components.
 
 You can now use any Supabase features from your client or server code!
 
