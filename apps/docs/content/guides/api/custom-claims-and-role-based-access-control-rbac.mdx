@@ -51,7 +51,13 @@ create table public.role_permissions (
   unique (role, permission)
 );
 comment on table public.role_permissions is 'Application permissions for each role.';
+
+-- Secure the tables
+alter table public.user_roles enable row level security;
+alter table public.role_permissions enable row level security;
 ```
+
+Both tables control what a user is allowed to do, so clients must not be able to read or write them through the [data APIs](/docs/guides/api). Enabling Row Level Security with no policy attached denies all access to the `anon` and `authenticated` roles, which is what you want here. Roles are assigned by trusted code, and permissions are only read by the `authorize` function you create below, which is `security definer` and keeps working under RLS.
 
 <Admonition type="note">
 
@@ -72,6 +78,8 @@ values
 ## Create Auth Hook to apply user role
 
 The [Custom Access Token Auth Hook](/docs/guides/auth/auth-hooks/custom-access-token-hook) runs before a token is issued. You can use it to edit the JWT.
+
+The hook runs as `supabase_auth_admin`, which is why the migration below grants that role access to `user_roles` and adds the only policy these tables need.
 
 <Tabs
   scrollable
