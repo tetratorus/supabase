@@ -1469,16 +1469,12 @@ function createStorageExplorerState({
         })
 
         const undeletedPaths = getUndeletedPaths(prefixes, data)
-        if (undeletedPaths.length > 0) {
-          throw new Error(
-            `${undeletedPaths.length} of ${prefixes.length} file(s) were not deleted. Check the bucket's storage policies.`
-          )
-        }
+        const deletedPaths = prefixes.filter((prefix) => !undeletedPaths.includes(prefix))
 
         if (!isDeleteFolder) {
           // If parent folders are empty, reinstate .emptyFolderPlaceholder to persist them
           const parentFolderPrefixes = uniq(
-            prefixes.map((prefix) => {
+            deletedPaths.map((prefix) => {
               const segments = prefix.split('/')
               return segments.slice(0, segments.length - 1).join('/')
             })
@@ -1487,16 +1483,33 @@ function createStorageExplorerState({
             parentFolderPrefixes.map((prefix) => state.validateParentFolderEmpty(prefix))
           )
 
-          toast.success(`Successfully deleted ${prefixes.length} file(s)`, {
-            id: toastId,
-            closeButton: true,
-            duration: SONNER_DEFAULT_DURATION,
-            description: undefined,
-          })
+          if (undeletedPaths.length > 0) {
+            toast.error(`${undeletedPaths.length} of ${prefixes.length} file(s) were not deleted`, {
+              id: toastId,
+              closeButton: true,
+              duration: SONNER_DEFAULT_DURATION,
+              description: "Check the bucket's storage policies.",
+            })
+          } else {
+            toast.success(`Successfully deleted ${prefixes.length} file(s)`, {
+              id: toastId,
+              closeButton: true,
+              duration: SONNER_DEFAULT_DURATION,
+              description: undefined,
+            })
+          }
+
           await state.refetchAllOpenedFolders()
           state.setSelectedItemsToDelete([])
         } else {
           toast.dismiss(toastId)
+
+          if (undeletedPaths.length > 0) {
+            await state.refetchAllOpenedFolders()
+            throw new Error(
+              `${undeletedPaths.length} of ${prefixes.length} file(s) were not deleted. Check the bucket's storage policies.`
+            )
+          }
         }
       } catch (err) {
         if (!isDeleteFolder) {
@@ -1513,8 +1526,6 @@ function createStorageExplorerState({
               state.updateRowStatus({ name, status: STORAGE_ROW_STATUS.READY, columnIndex })
             })
           }
-
-          await state.refetchAllOpenedFolders()
         } else {
           toast.dismiss(toastId)
           throw err
