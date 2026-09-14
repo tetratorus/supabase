@@ -263,7 +263,7 @@ For improved security, we recommend not exposing the `public` schema automatical
       Add the following statements to the generated file:
 
       ```sql
-      alter default privileges for role postgres in schema public revoke select, insert, update, delete on tables from anon, authenticated, service_role;
+      alter default privileges for role postgres in schema public revoke all on tables from anon, authenticated, service_role;
       alter default privileges for role postgres in schema public revoke execute on functions from anon, authenticated, service_role, public;
       alter default privileges for role postgres in schema public revoke usage, select, update on sequences from anon, authenticated, service_role;
       ```

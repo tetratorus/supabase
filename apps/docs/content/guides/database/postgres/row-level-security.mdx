@@ -61,7 +61,7 @@ On existing projects, a new table in `public` starts with every privilege alread
 
 Adding policies doesn't take those grants back. A table protected only by policies still hands `anon` an insert path if you never revoke the grant.
 
-The `all` grant covers every table privilege: `select`, `insert`, `update`, `delete`, `truncate`, `references`, and `trigger`. Policies don't apply to `truncate`. On a table with RLS enabled and no policies, `delete` removes nothing, but `truncate` empties the table. `revoke all` removes that privilege along with the rest.
+The `all` grant includes every table privilege. Beyond `select`, `insert`, `update`, and `delete`, it grants `truncate`, `references`, `trigger`, and, on Postgres 17 and later, `maintain`. Policies don't apply to `truncate`. On a table with RLS enabled and no policies, `delete` removes nothing, but `truncate` empties the table. `revoke all` removes that privilege along with the rest.
 
 Not every project grants these automatically. See [Default privileges](/docs/guides/api/securing-your-api#default-privileges). Grant each role only the operations it needs.
 
