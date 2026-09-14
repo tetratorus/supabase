@@ -1,4 +1,6 @@
-import { SupaTable } from '@/components/grid/types'
+import { ident, literal } from '@supabase/pg-meta'
+
+import { SupaColumn, SupaTable } from '@/components/grid/types'
 import { Lint } from '@/data/lint/lint-query'
 
 export const getEntityLintDetails = (
@@ -34,51 +36,52 @@ export const getTablePoliciesUrl = (
   )}&schema=${encodeURIComponent(schema ?? '')}`
 }
 
+/**
+ * Format a single row value as a Postgres literal
+ *
+ * Only NULL, array and JSON types need dedicated handling, everything else can be quoted as a
+ * literal given that Postgres implicitly casts to the right type based on the column type
+ */
+const formatValueForSql = (value: unknown, column: SupaColumn): string => {
+  if (value === null || value === undefined) return 'null'
+
+  if (column.dataType === 'ARRAY') {
+    const array = Array.isArray(value) ? value : JSON.parse(value as string)
+    return formatArrayForSql(array as unknown[])
+  }
+
+  // JSON columns come through either as raw JSON text or as an already parsed value
+  if (column.format.includes('json')) {
+    return literal(typeof value === 'string' ? value : JSON.stringify(value))
+  }
+
+  // Booleans are emitted unquoted so the statement stays readable
+  if (typeof value === 'boolean') return `${value}`
+
+  return literal(value)
+}
+
 export const formatTableRowsToSQL = (table: SupaTable, rows: any[]) => {
   if (rows.length === 0) return ''
 
-  const columns = table.columns.map((col) => `"${col.name}"`).join(', ')
+  const columns = table.columns.map((col) => ident(col.name)).join(', ')
 
+  // Values are emitted per column rather than per row property, so that the column list and every
+  // VALUES tuple always have the same arity even if a row is missing or has extra properties
   const valuesSets = rows
     .map((row) => {
-      const filteredRow = { ...row }
-      if ('idx' in filteredRow) delete filteredRow.idx
-
-      const values = Object.entries(filteredRow).map(([key, val]) => {
-        const { dataType, format } = table.columns.find((col) => col.name === key) ?? {}
-
-        // We only check for NULL, array and JSON types, everything else we stringify
-        // given that Postgres can implicitly cast the right type based on the column type
-        // For string types, we need to deal with escaping single quotes
-        const stringFormats = ['text', 'varchar']
-
-        if (val === null) {
-          return 'null'
-        } else if (dataType === 'ARRAY') {
-          const array = Array.isArray(val) ? val : JSON.parse(val as string)
-          return `${formatArrayForSql(array as unknown[])}`
-        } else if (format?.includes('json')) {
-          return `${JSON.stringify(val).replace(/\\"/g, '"').replace(/'/g, "''").replace('"', "'").replace(/.$/, "'")}`
-        } else if (
-          typeof format === 'string' &&
-          typeof val === 'string' &&
-          stringFormats.includes(format)
-        ) {
-          return `'${val.replaceAll("'", "''")}'`
-        } else if (typeof val === 'number' || typeof val === 'boolean') {
-          return `${val}`
-        } else if (typeof val === 'string') {
-          return `'${val.replaceAll("'", "''")}'`
-        } else {
-          return `'${val}'`
-        }
-      })
-
+      const values = table.columns.map((col) =>
+        col.name in row ? formatValueForSql(row[col.name], col) : 'default'
+      )
       return `(${values.join(', ')})`
     })
     .join(', ')
 
-  return `INSERT INTO "${table.schema}"."${table.name}" (${columns}) VALUES ${valuesSets};`
+  const relation = table.schema
+    ? `${ident(table.schema)}.${ident(table.name)}`
+    : `${ident(table.name)}`
+
+  return `INSERT INTO ${relation} (${columns}) VALUES ${valuesSets};`
 }
 
 /**
@@ -120,12 +123,12 @@ const formatArrayForSql = (arr: unknown[]): string => {
   arr.forEach((item, index) => {
     if (Array.isArray(item)) {
       result += formatArrayForSql(item)
-    } else if (typeof item === 'string') {
-      result += `'${item.replaceAll("'", "''")}'`
+    } else if (typeof item === 'boolean') {
+      result += `${item}`
     } else if (!!item && typeof item === 'object') {
       result += `${safeDollarQuote(JSON.stringify(item))}::json`
     } else {
-      result += `${item}`
+      result += literal(item)
     }
 
     if (index < arr.length - 1) {

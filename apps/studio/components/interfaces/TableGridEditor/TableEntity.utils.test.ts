@@ -25,7 +25,7 @@ describe('TableEntity.utils: formatTableRowsToSQL', () => {
     ]
 
     const result = formatTableRowsToSQL(table, rows)
-    const expected = `INSERT INTO "public"."people" ("id", "name") VALUES (1, 'Person 1'), (2, 'Person 2'), (3, 'Person 3');`
+    const expected = `INSERT INTO public.people (id, name) VALUES (1, 'Person 1'), (2, 'Person 2'), (3, 'Person 3');`
     expect(result).toBe(expected)
   })
 
@@ -49,7 +49,7 @@ describe('TableEntity.utils: formatTableRowsToSQL', () => {
     ]
 
     const result = formatTableRowsToSQL(table, rows)
-    const expected = `INSERT INTO "public"."people" ("id", "name") VALUES (1, 'Person 1'), (2, null), (3, 'Person 3');`
+    const expected = `INSERT INTO public.people (id, name) VALUES (1, 'Person 1'), (2, null), (3, 'Person 3');`
     expect(result).toBe(expected)
   })
 
@@ -85,7 +85,7 @@ describe('TableEntity.utils: formatTableRowsToSQL', () => {
       },
     ]
     const result = formatTableRowsToSQL(table, rows)
-    const expected = `INSERT INTO "public"."demo" ("id", "name", "tags", "metadata") VALUES (2, 'Person 1', ARRAY['tag-a','tag-c'], '{"version": 1}'), (3, 'ONeil', ARRAY['tag-a'], '{"version": 1, "name": "O''Neil"}');`
+    const expected = `INSERT INTO public.demo (id, name, tags, metadata) VALUES (2, 'Person 1', ARRAY['tag-a','tag-c'], '{"version": 1}'), (3, 'ONeil', ARRAY['tag-a'], '{"version": 1, "name": "O''Neil"}');`
     expect(result).toBe(expected)
   })
 
@@ -116,7 +116,7 @@ describe('TableEntity.utils: formatTableRowsToSQL', () => {
     ]
 
     const result = formatTableRowsToSQL(table, rows)
-    const expected = `INSERT INTO "storage"."buckets" ("id", "public", "avif_autodetection", "file_size_limit", "allowed_mime_types") VALUES ('emails', true, false, 10485760, ARRAY['image/*','image/o''neil']);`
+    const expected = `INSERT INTO storage.buckets (id, public, avif_autodetection, file_size_limit, allowed_mime_types) VALUES ('emails', true, false, 10485760, ARRAY['image/*','image/o''neil']);`
     expect(result).toBe(expected)
   })
 
@@ -133,7 +133,82 @@ describe('TableEntity.utils: formatTableRowsToSQL', () => {
     const rows = [{ email: "o'neil@example.com" }]
 
     const result = formatTableRowsToSQL(table, rows)
-    const expected = `INSERT INTO "public"."users" ("email") VALUES ('o''neil@example.com');`
+    const expected = `INSERT INTO public.users (email) VALUES ('o''neil@example.com');`
+    expect(result).toBe(expected)
+  })
+
+  it('should escape double quotes in schema, table and column names', () => {
+    const table: SupaTable = {
+      id: 1,
+      type: ENTITY_TYPE.TABLE,
+      columns: [
+        { name: 'id', dataType: 'bigint', format: 'int8', position: 0 },
+        { name: 'first"name', dataType: 'text', format: 'text', position: 1 },
+      ],
+      name: 'customer"name',
+      schema: 'my"schema',
+      comment: undefined,
+      estimateRowCount: 1,
+    }
+    const rows = [{ id: 1, 'first"name': 'Person 1' }]
+
+    const result = formatTableRowsToSQL(table, rows)
+    const expected = `INSERT INTO "my""schema"."customer""name" (id, "first""name") VALUES (1, 'Person 1');`
+    expect(result).toBe(expected)
+  })
+
+  it('should omit the schema qualification when the table has no schema', () => {
+    const table: SupaTable = {
+      id: 1,
+      type: ENTITY_TYPE.TABLE,
+      columns: [{ name: 'id', dataType: 'bigint', format: 'int8', position: 0 }],
+      name: 'people',
+      schema: undefined,
+      comment: undefined,
+      estimateRowCount: 1,
+    }
+
+    const result = formatTableRowsToSQL(table, [{ id: 1 }])
+    expect(result).toBe(`INSERT INTO people (id) VALUES (1);`)
+  })
+
+  it('should escape quotes in JSON values', () => {
+    const table: SupaTable = {
+      id: 1,
+      type: ENTITY_TYPE.TABLE,
+      columns: [{ name: 'metadata', dataType: 'jsonb', format: 'jsonb', position: 0 }],
+      name: 'demo',
+      schema: 'public',
+      comment: undefined,
+      estimateRowCount: 1,
+    }
+    const rows = [
+      { metadata: `{"quote": "a \\" b", "apostrophe": "O'Neil"}` },
+      { metadata: { nested: { quote: 'a " b' } } },
+    ]
+
+    const result = formatTableRowsToSQL(table, rows)
+    const expected = `INSERT INTO public.demo (metadata) VALUES (E'{"quote": "a \\\\" b", "apostrophe": "O''Neil"}'), (E'{"nested":{"quote":"a \\\\" b"}}');`
+    expect(result).toBe(expected)
+  })
+
+  it('should keep the column list and each values tuple in sync', () => {
+    const table: SupaTable = {
+      id: 1,
+      type: ENTITY_TYPE.TABLE,
+      columns: [
+        { name: 'id', dataType: 'bigint', format: 'int8', position: 0 },
+        { name: 'name', dataType: 'text', format: 'text', position: 1 },
+      ],
+      name: 'people',
+      schema: 'public',
+      comment: undefined,
+      estimateRowCount: 1,
+    }
+    const rows = [{ id: 1 }, { name: 'Person 2', id: 2, extra: 'ignored' }]
+
+    const result = formatTableRowsToSQL(table, rows)
+    const expected = `INSERT INTO public.people (id, name) VALUES (1, default), (2, 'Person 2');`
     expect(result).toBe(expected)
   })
 
@@ -173,7 +248,7 @@ describe('TableEntity.utils: formatTableRowsToSQL', () => {
     ]
 
     const result = formatTableRowsToSQL(table, rows)
-    const expected = `INSERT INTO "public"."people" ("id", "name") VALUES (1, 'Person 1'), (2, 'Person 2');`
+    const expected = `INSERT INTO public.people (id, name) VALUES (1, 'Person 1'), (2, 'Person 2');`
     expect(result).toBe(expected)
   })
 })
