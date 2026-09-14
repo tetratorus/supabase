@@ -12,10 +12,17 @@ The Send Email Hook replaces Supabase's built-in email sending. You can use this
 
 **Inputs**
 
-| Field   | Type                                              | Description                                    |
-| ------- | ------------------------------------------------- | ---------------------------------------------- |
-| `user`  | [`User`](/docs/guides/auth/users#the-user-object) | The user account taking the action             |
-| `email` | `object`                                          | Metadata specific to the email sending process |
+| Field        | Type                                              | Description                                    |
+| ------------ | ------------------------------------------------- | ---------------------------------------------- |
+| `user`       | [`User`](/docs/guides/auth/users#the-user-object) | The user account taking the action             |
+| `email_data` | `object`                                          | Metadata specific to the email sending process |
+
+The two URL fields in `email_data` have different purposes:
+
+- `site_url` is the external URL of your project's Auth server, the same base that the built-in `{{ .ConfirmationURL }}` template variable uses to build verification links. It is not the Site URL from your [URL Configuration](/dashboard/project/_/auth/url-configuration).
+- `redirect_to` is where the user is sent after verification: the `redirectTo`/`emailRedirectTo` value from the request if it is on your allow list, otherwise the Site URL from your URL Configuration.
+
+To link back to your app, use `redirect_to`, not `site_url`.
 
 <Tabs
   scrollable
