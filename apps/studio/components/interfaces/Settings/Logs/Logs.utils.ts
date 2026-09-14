@@ -99,7 +99,7 @@ export const buildWhereClauses = (
 ): SafeLogSqlFragment[] => {
   const keys = Object.keys(filters)
   const _resolveTemplateToStatement = (dotKey: string): SafeLogSqlFragment | null => {
-    const template = filterTemplates[dotKey]
+    const template = Object.hasOwn(filterTemplates, dotKey) ? filterTemplates[dotKey] : undefined
     const value = get(filters, dotKey)
 
     if (template === undefined) {
