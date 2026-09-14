@@ -25,7 +25,8 @@ Supabase Auth provides these [general configuration options](/dashboard/project/
 - **Allow new users to sign up**: Users will be able to sign up. If this config is disabled, only existing users can sign in.
 
 - **Confirm Email**: Users will need to confirm their email address before signing in for the first time.
-  - Having **Confirm Email** disabled assumes that the user's email does not need to be verified in order to sign in and implicitly confirms the user's email in the database.
+  - Having **Confirm Email** disabled assumes that the user's email does not need to be verified in order to sign in and implicitly confirms the user's email in the database when they sign up.
+  - This setting only applies to users who sign up. Users created via the dashboard or the [admin API](/docs/reference/javascript/auth-admin-createuser) are not implicitly confirmed and cannot sign in until they are confirmed, so set `email_confirm: true` when creating them.
   - This option can be found in the email provider under the provider-specific configuration.
     {/* - If you previously relied on this config to autoconfirm a user's email address, you can switch to use **Allow unverified email sign in** instead. This new option allows the user to sign in with an unverified email which you can keep track of through the user object. It provides more versatility if you require your users to verify their email address in the future since you can structure your RLS policies to check the user's `email_verified` field. */}
 

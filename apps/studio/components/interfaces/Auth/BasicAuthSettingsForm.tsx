@@ -315,7 +315,7 @@ export const BasicAuthSettingsForm = () => {
                       <FormItemLayout
                         layout="flex-row-reverse"
                         label="Confirm email"
-                        description="Users will need to confirm their email address before signing in for the first time"
+                        description="Users who sign up need to confirm their email address before signing in for the first time. Does not apply to users created via the dashboard or admin API, which must be confirmed explicitly"
                       >
                         <FormControl>
                           <Switch
