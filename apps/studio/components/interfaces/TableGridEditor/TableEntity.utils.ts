@@ -71,7 +71,9 @@ export const formatTableRowsToSQL = (table: SupaTable, rows: any[]) => {
   const valuesSets = rows
     .map((row) => {
       const values = table.columns.map((col) =>
-        col.name in row ? formatValueForSql(row[col.name], col) : 'default'
+        Object.prototype.hasOwnProperty.call(row, col.name)
+          ? formatValueForSql(row[col.name], col)
+          : 'default'
       )
       return `(${values.join(', ')})`
     })
