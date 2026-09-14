@@ -18,15 +18,18 @@ If you plan to solely use Prisma instead of the Supabase Data API (PostgREST), t
 
 This guide targets Prisma v7 and later, where connection URLs live in the Prisma config file and Prisma Client requires a [driver adapter](https://www.prisma.io/docs/orm/overview/databases/database-drivers).
 
-On Prisma v6 and earlier, there is no config file: set the URLs in the `datasource` block of `schema.prisma` instead, and instantiate `PrismaClient` from `@prisma/client` without an adapter.
+On Prisma v6 and earlier, set the URLs in the `datasource` block of `schema.prisma` instead, and instantiate `PrismaClient` from `@prisma/client` without an adapter:
 
 ```prisma prisma/schema.prisma
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL") // serverless deployments only
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 ```
+
+For a serverless deployment, add `directUrl = env("DIRECT_URL")` so migrations run over a direct connection. Leave it out otherwise — Prisma resolves `env()` when it loads the datasource and errors if the variable isn't set.
+
+If your v6 project has a `prisma.config.ts` (created by `prisma init` on recent v6 releases), its `datasource.url` takes precedence over the schema block, so set the migration URL there or delete the file.
 
 To move an existing project onto v7, follow [Prisma's upgrade guide](https://www.prisma.io/docs/orm/more/upgrade-guides/upgrading-versions/upgrading-to-prisma-7).
 
