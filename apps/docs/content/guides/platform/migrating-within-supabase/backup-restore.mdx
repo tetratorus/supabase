@@ -262,6 +262,22 @@ If you encounter permission errors related to `supabase_admin` during restore:
   ALTER ... OWNER TO "supabase_admin"
 ```
 
+#### `pgsodium` and `vault` permission errors
+
+`pgsodium.key` and `vault.secrets` are owned by `supabase_admin`, so the `postgres` role can't write to them. If your data dump contains these tables, the restore fails with errors such as:
+
+```sh
+ERROR:  permission denied for table key
+ERROR:  permission denied for sequence key_key_id_seq
+```
+
+- Open `data.sql`
+- Comment out the `COPY "pgsodium"."key"` and `COPY "vault"."secrets"` blocks, along with the `setval` call for `pgsodium.key_key_id_seq`
+
+Alternatively, exclude them when you dump: `supabase db dump ... -x "pgsodium.key" -x "vault.secrets"`.
+
+Skipping these tables does not lose your encrypted column data, as long as you copy the root encryption key to the new project as described in step 5 of the restore. Vault secrets are not carried over by the dump, so re-create them in the new project with [`vault.create_secret()`](/docs/guides/database/vault).
+
 #### `cli_login_postgres` role grant error
 
 If you encounter the error:
