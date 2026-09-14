@@ -144,7 +144,7 @@ Projects planning to upgrade from Postgres 15 to Postgres 17 need to first disab
 
 <Admonition type="note">
 
-`pgjwt` was enabled by default on every Supabase project up until Postgres 17. If you weren't explicitly using `pgjwt` in your project, it's most likely safe to disable.
+`pgjwt` was enabled by default on every Supabase project up until Postgres 17. If you weren't explicitly using `pgjwt` in your project, it's most likely safe to disable. To check, search your SQL functions, triggers, and application code for calls to the extension's [`sign()` and `verify()`](/docs/guides/database/extensions/pgjwt#api) functions.
 
 </Admonition>
 
