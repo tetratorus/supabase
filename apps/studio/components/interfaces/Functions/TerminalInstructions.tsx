@@ -7,6 +7,7 @@ import { Button, Collapsible, CollapsibleContent, CollapsibleTrigger } from 'ui'
 
 import type { Commands } from './Functions.types'
 import CommandRender from '@/components/interfaces/Functions/CommandRender'
+import { formatEdgeFunctionAuthHeader } from '@/components/interfaces/Functions/Functions.utils'
 import { DocsButton } from '@/components/ui/DocsButton'
 import { useAccessTokensQuery } from '@/data/access-tokens/access-tokens-query'
 import { useAPIKeys } from '@/data/api-keys/api-keys-query'
@@ -35,7 +36,10 @@ export const TerminalInstructions = forwardRef<
   const { data: endpoint } = useProjectApiUrl({ projectRef })
   const functionsEndpoint = `${endpoint}/functions/v1`
 
-  const apiKey = publishableKey?.api_key ?? anonKey?.api_key ?? '[YOUR ANON KEY]'
+  const selectedKey = publishableKey ?? anonKey
+  const apiKey = selectedKey?.api_key ?? '[YOUR ANON KEY]'
+  const isPublishableKey = selectedKey?.type === 'publishable'
+  const obfuscatedName = isPublishableKey ? '[YOUR PUBLISHABLE KEY]' : '[YOUR ANON KEY]'
 
   const commands: Commands[] = [
     {
@@ -64,14 +68,14 @@ export const TerminalInstructions = forwardRef<
       comment: 'Deploy your function',
     },
     {
-      command: `curl -L -X POST '${functionsEndpoint}/hello-world' -H 'Authorization: Bearer ${apiKey}'${anonKey?.type === 'publishable' ? ` -H 'apikey: ${apiKey}'` : ''} --data '{"name":"Functions"}'`,
+      command: `curl -L -X POST '${functionsEndpoint}/hello-world' -H '${formatEdgeFunctionAuthHeader({ keyValue: apiKey, isNewKey: isPublishableKey })}' --data '{"name":"Functions"}'`,
       description: 'Invokes the hello-world function',
       jsx: () => {
         return (
           <>
             <span className="text-brand-600">curl</span> -L -X POST '{functionsEndpoint}
-            /hello-world' -H 'Authorization: Bearer [YOUR ANON KEY]'
-            {anonKey?.type === 'publishable' ? " -H 'apikey: [YOUR ANON KEY]' " : ''}
+            /hello-world'{' '}
+            {`-H '${formatEdgeFunctionAuthHeader({ keyValue: obfuscatedName, isNewKey: isPublishableKey })}' `}
             {`--data '{"name":"Functions"}'`}
           </>
         )

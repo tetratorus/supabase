@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
 
+import { getEdgeFunctionAuthHeader } from './Functions.utils'
 import {
   buildEdgeFunctionHeaderAddActions,
   ensureEdgeFunctionAuthorizationHeader,
-  getEdgeFunctionAuthHeader,
 } from './httpHeaderAddActions'
 
 describe('buildEdgeFunctionHeaderAddActions', () => {

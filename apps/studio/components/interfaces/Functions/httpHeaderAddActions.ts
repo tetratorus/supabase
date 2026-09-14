@@ -1,5 +1,11 @@
 import type { KeyValueFieldArrayAction } from 'ui-patterns/form/KeyValueFieldArray/KeyValueFieldArray'
 
+import {
+  getEdgeFunctionAuthHeader,
+  isNewApiKey,
+  isPublishableApiKey,
+} from '@/components/interfaces/Functions/Functions.utils'
+
 interface BuildEdgeFunctionHeaderAddActionsParams<TRow> {
   apiKey: string
   /**
@@ -23,11 +29,6 @@ interface EnsureEdgeFunctionAuthorizationHeaderParams<TRow extends HTTPHeader> {
   createRow: (name: string, value: string) => TRow
 }
 
-const isNewApiKey = (apiKey: string) =>
-  apiKey.startsWith('sb_secret_') || apiKey.startsWith('sb_publishable_')
-
-const isPublishableApiKey = (apiKey: string) => apiKey.startsWith('sb_publishable_')
-
 /**
  * Labels an action after the key it actually carries. Legacy keys are not self describing, so the
  * caller names them: the secret slot falls back to "Add secret key", the publishable slot to
@@ -38,11 +39,6 @@ const getApiKeyActionLabel = (apiKey: string, legacyLabel: string) => {
   if (isNewApiKey(apiKey)) return 'Add secret key'
   return legacyLabel
 }
-
-export const getEdgeFunctionAuthHeader = (apiKey: string) =>
-  isNewApiKey(apiKey)
-    ? { name: 'apikey', value: apiKey }
-    : { name: 'Authorization', value: `Bearer ${apiKey}` }
 
 export const ensureEdgeFunctionAuthorizationHeader = <TRow extends HTTPHeader>({
   headers,

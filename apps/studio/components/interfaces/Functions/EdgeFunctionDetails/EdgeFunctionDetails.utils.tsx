@@ -1,17 +1,21 @@
 import { getAnchor } from 'ui'
 
+import { formatEdgeFunctionAuthHeader } from '@/components/interfaces/Functions/Functions.utils'
 import { EdgeFunction } from '@/data/edge-functions/edge-function-query'
 import { DOCS_URL } from '@/lib/constants'
 
 export const generateCLICommands = ({
   selectedFunction,
   functionUrl,
-  anonKey,
+  apiKey,
+  isPublishableKey,
 }: {
   selectedFunction?: EdgeFunction
   functionUrl: string
-  anonKey: string
+  apiKey: string
+  isPublishableKey: boolean
 }) => {
+  const obfuscatedName = isPublishableKey ? '[YOUR PUBLISHABLE KEY]' : '[YOUR ANON KEY]'
   const managementCommands: any = [
     {
       command: `supabase functions deploy ${selectedFunction?.slug}`,
@@ -80,17 +84,20 @@ export const generateCLICommands = ({
 
   const invokeCommands: any = [
     {
-      command: `curl -L -X POST '${functionUrl}' -H 'Authorization: Bearer ${
-        anonKey ?? '[YOUR ANON KEY]'
-      }' --data '{"name":"Functions"}'`,
+      command: `curl -L -X POST '${functionUrl}' -H '${formatEdgeFunctionAuthHeader({
+        keyValue: apiKey,
+        isNewKey: isPublishableKey,
+      })}' --data '{"name":"Functions"}'`,
       description: 'Invokes the hello function',
       jsx: () => {
         return (
           <>
             <span className="text-brand">curl</span> -L -X POST '{functionUrl}'{' '}
             {selectedFunction?.verify_jwt
-              ? `-H
-            'Authorization: Bearer [YOUR ANON KEY]' `
+              ? `-H '${formatEdgeFunctionAuthHeader({
+                  keyValue: obfuscatedName,
+                  isNewKey: isPublishableKey,
+                })}' `
               : ''}
             {`--data '{"name":"Functions"}'`}
           </>

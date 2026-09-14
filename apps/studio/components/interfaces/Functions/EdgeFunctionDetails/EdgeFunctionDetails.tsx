@@ -100,12 +100,15 @@ export const EdgeFunctionDetails = () => {
     defaultValues: { name: '', verify_jwt: false },
   })
 
-  const apiKey = publishableKey?.api_key ?? anonKey?.api_key ?? '[YOUR ANON KEY]'
+  const selectedKey = publishableKey ?? anonKey
+  const apiKey = selectedKey?.api_key ?? '[YOUR ANON KEY]'
+  const isPublishableKey = selectedKey?.type === 'publishable'
 
   const { managementCommands } = generateCLICommands({
     selectedFunction,
     functionUrl,
-    anonKey: apiKey,
+    apiKey,
+    isPublishableKey,
   })
 
   const onUpdateFunction: SubmitHandler<z.infer<typeof FormSchema>> = async (values: any) => {
@@ -270,6 +273,7 @@ export const EdgeFunctionDetails = () => {
                     functionUrl,
                     functionName: selectedFunction?.name ?? '',
                     apiKey,
+                    isPublishableKey,
                   })
 
                   return (
@@ -291,6 +295,7 @@ export const EdgeFunctionDetails = () => {
                               functionUrl,
                               functionName: selectedFunction?.name ?? '',
                               apiKey,
+                              isPublishableKey,
                             })
                           )
                         }}

@@ -1,3 +1,5 @@
+import { formatEdgeFunctionAuthHeader } from '@/components/interfaces/Functions/Functions.utils'
+
 interface InvocationTab {
   id: string
   label: string
@@ -8,6 +10,7 @@ interface InvocationTab {
     functionUrl: string
     functionName: string
     apiKey: string
+    isPublishableKey: boolean
   }) => string
 }
 
@@ -16,14 +19,13 @@ export const INVOCATION_TABS: InvocationTab[] = [
     id: 'curl',
     label: 'cURL',
     language: 'bash',
-    code: ({ showKey, functionUrl, apiKey }) => {
-      const obfuscatedName = apiKey.includes('publishable')
-        ? 'SUPABASE_PUBLISHABLE_KEY'
-        : 'SUPABASE_ANON_KEY'
+    code: ({ showKey, functionUrl, apiKey, isPublishableKey }) => {
+      const obfuscatedName = isPublishableKey ? 'SUPABASE_PUBLISHABLE_KEY' : 'SUPABASE_ANON_KEY'
       const keyValue = showKey ? apiKey : obfuscatedName
+      const authHeader = formatEdgeFunctionAuthHeader({ keyValue, isNewKey: isPublishableKey })
 
       return `curl -L -X POST '${functionUrl}' \\
-  -H 'Authorization: Bearer ${keyValue}' \\${apiKey.includes('publishable') ? `\n  -H 'apikey: ${keyValue}' \\` : ''}
+  -H '${authHeader}' \\
   -H 'Content-Type: application/json' \\
   --data '{"name":"Functions"}'`
     },
