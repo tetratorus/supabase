@@ -285,7 +285,7 @@ It's safe to trust `getClaims()` because it validates the JWT signature against 
 The Proxy alone is enough for email and password sign-in. Sign-in methods that redirect the user back to your app need a Route Handler that finishes the sign-in on the server and writes the session to cookies. Starter templates often include these routes already, so you only need to add the ones your app uses:
 
 - **OAuth and social login** use `app/auth/callback/route.ts`. Pass this URL as the `redirectTo` option to `signInWithOAuth`. The handler calls `exchangeCodeForSession` with the code in the URL. See the PKCE flow section of any [social login provider guide](/docs/guides/auth/social-login/auth-github#add-sign-in-code-to-your-client-app) for the code.
-- **Email confirmation, magic links, and password recovery** use `app/auth/confirm/route.ts`. Point your email templates at this URL. The handler calls `verifyOtp` with the `token_hash` in the URL. See [Password-based Auth](/docs/guides/auth/passwords) for the code.
+- **Email confirmation, magic links, and password recovery** use `app/auth/confirm/route.ts`. Point your email templates at this URL. The handler calls `verifyOtp` with the `token_hash` in the URL. See [Password-based Auth](/docs/guides/auth/passwords) for the code, including the [password reset flow](/docs/guides/auth/passwords#resetting-a-password).
 
 Add each URL you use to your [redirect allow list](/docs/guides/auth/redirect-urls).
 
