@@ -85,7 +85,7 @@ vi.mock('common', () => ({
   useFlag: () => false,
 }))
 
-vi.mock('framer-motion', () => ({
+vi.mock('motion/react', () => ({
   AnimatePresence: ({ children }: { children: ReactNode }) => <>{children}</>,
   motion: {
     div: ({ children, ...props }: any) => <div {...props}>{children}</div>,

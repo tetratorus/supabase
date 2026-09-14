@@ -1,6 +1,6 @@
 import { useParams } from 'common'
-import { motion } from 'framer-motion'
 import { ChevronRight } from 'lucide-react'
+import { motion } from 'motion/react'
 import Link from 'next/link'
 import { ShimmeringLoader } from 'ui-patterns/ShimmeringLoader'
 
