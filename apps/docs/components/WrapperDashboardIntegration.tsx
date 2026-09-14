@@ -19,6 +19,12 @@ export function WrapperDashboardIntegration({ title, path }: { title: string; pa
       }
     >
       <p>You can enable the {title} wrapper right from the Supabase dashboard.</p>
+      <p>
+        Foreign tables are not accessible through the Data API directly. Keep them in a private
+        schema and query them with SQL, or expose them through a database function. See{' '}
+        <Link href="/guides/database/extensions/wrappers/overview#security">Security</Link> for an
+        example.
+      </p>
     </Admonition>
   )
 }

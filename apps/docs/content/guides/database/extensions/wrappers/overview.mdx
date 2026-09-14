@@ -46,6 +46,8 @@ Examples:
 
 Although a foreign table behaves like any other table, the data is not stored inside your database. The data remains inside the Remote Server.
 
+Foreign tables should live in a private schema and are not accessible through the Data API directly. Query them with SQL, or expose them to your application through a database function. See [Security](#security) for a worked example.
+
 ### ETL with Wrappers
 
 ETL stands for Extract, Transform, Load. It's an established process for moving data from one system to another. For example, it's common to move data from a production database to a data warehouse.
