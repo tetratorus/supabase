@@ -70,7 +70,7 @@ if (typeof window !== 'undefined') {
   abortController = new AbortController()
 }
 
-function createStorageExplorerState({
+export function createStorageExplorerState({
   projectRef,
   connectionString,
   bucket,
@@ -87,6 +87,8 @@ function createStorageExplorerState({
     const { sortBy, sortByOrder } = getStoragePreference(projectRef)
     return { column: sortBy, order: sortByOrder }
   }
+
+  let latestFoldersByPathRequestId = 0
 
   const state = proxy({
     projectRef,
@@ -164,6 +166,10 @@ function createStorageExplorerState({
 
     isSearching: false,
     setIsSearching: (value: boolean) => (state.isSearching = value),
+
+    // The search filter the currently rendered columns were fetched with
+    searchString: '',
+    setSearchString: (value: string) => (state.searchString = value),
 
     isRefreshing: false,
 
@@ -397,7 +403,7 @@ function createStorageExplorerState({
 
     refetchAllOpenedFolders: async () => {
       const paths = state.openedFolders.map((folder) => folder.name)
-      await state.fetchFoldersByPath({ paths })
+      await state.fetchFoldersByPath({ paths, searchString: state.searchString })
     },
 
     refreshAll: async () => {
@@ -420,6 +426,7 @@ function createStorageExplorerState({
     }) => {
       if (state.selectedBucket.id === undefined) return
 
+      const requestId = ++latestFoldersByPathRequestId
       const pathsWithEmptyPrefix = [''].concat(paths)
 
       if (showLoading) {
@@ -452,6 +459,9 @@ function createStorageExplorerState({
           }
         })
       )
+
+      // Discard responses superseded by a later request
+      if (requestId !== latestFoldersByPathRequestId) return
 
       const formattedFolders = foldersItems.map((folderItems, idx) => {
         const prefix = paths.slice(0, idx).join('/')

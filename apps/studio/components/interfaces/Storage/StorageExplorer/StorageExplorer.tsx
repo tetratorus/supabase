@@ -41,6 +41,7 @@ export const StorageExplorer = () => {
     setSelectedFilePreview,
     setSelectedItemsToMove,
     setIsSearching,
+    setSearchString,
   } = useStorageExplorerStateSnapshot()
   const { view } = useStoragePreference(projectRef)
 
@@ -100,8 +101,9 @@ export const StorageExplorer = () => {
   })
 
   useEffect(() => {
+    setSearchString(debouncedSearchString)
     if (bucket && projectRef) fetchContents(bucket)
-  }, [bucket, projectRef, debouncedSearchString, selectedBucket.id])
+  }, [bucket, projectRef, debouncedSearchString, selectedBucket.id, setSearchString])
 
   /** Checkbox selection methods */
   /** [Joshen] We'll only support checkbox selection for files ONLY */
