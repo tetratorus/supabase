@@ -302,7 +302,7 @@
           {
             "id": "supabase-inspect-db-role-stats",
             "title": "Show number of active connections",
-            "slug": "supabase-inspect-db-role-connections",
+            "slug": "supabase-inspect-db-role-stats",
             "type": "cli-command"
           },
           {

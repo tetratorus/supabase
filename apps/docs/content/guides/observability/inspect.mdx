@@ -29,15 +29,19 @@ The inspection tools for your Postgres database are under the `inspect db` comma
 
 ```
 $ supabase inspect db help
-Tools to inspect your Supabase database
+DESCRIPTION
+  Tools to inspect your Supabase database.
 
-Usage:
-  supabase inspect db [command]
+USAGE
+  supabase inspect db <subcommand> [flags]
 
-Available Commands:
-  bloat                Estimates space allocated to a relation that is full of dead tuples
-  blocking             Show queries that are holding locks and the queries that are waiting for them to be released
-  cache-hit            Show cache hit rates for tables and indices
+...
+
+SUBCOMMANDS
+  db-stats            Show database stats
+  replication-slots   Show replication slots
+  locks               Show exclusive locks
+  blocking            Show blocking queries
 
 ...
 ```
@@ -76,37 +80,34 @@ Some commands might require `pg_stat_statements` to be enabled or a specific Pos
 
 These commands are handy if you are running low on disk storage:
 
-- [bloat](/docs/reference/cli/supabase-inspect-db-bloat) - estimates the amount of wasted space
-- [vacuum-stats](/docs/reference/cli/supabase-inspect-db-vacuum-stats) - gives information on waste collection routines
-- [table-record-counts](/docs/reference/cli/supabase-inspect-db-table-record-counts) - estimates the number of records per table
-- [table-sizes](/docs/reference/cli/supabase-inspect-db-table-sizes) - shows the sizes of tables
-- [index-sizes](/docs/reference/cli/supabase-inspect-db-index-sizes) - shows the sizes of individual index
-- [table-index-sizes](/docs/reference/cli/supabase-inspect-db-table-index-sizes) - shows the sizes of indexes for each table
+- [`bloat`](/docs/reference/cli/supabase-inspect-db-bloat) - estimates the amount of wasted space
+- [`vacuum-stats`](/docs/reference/cli/supabase-inspect-db-vacuum-stats) - gives information on waste collection routines
+- [`table-stats`](/docs/reference/cli/supabase-inspect-db-table-stats) - shows the table size, index size, and estimated row count for each table
 
 #### Query performance
 
 The commands below are useful if your Postgres database consumes a lot of resources like CPU, RAM or Disk IO. You can also use them to investigate slow queries.
 
-- [cache-hit](/docs/reference/cli/supabase-inspect-db-cache-hit) - shows how efficient your cache usage is overall
-- [unused-indexes](/docs/reference/cli/supabase-inspect-db-unused-indexes) - shows indexes with low index scans
-- [index-usage](/docs/reference/cli/supabase-inspect-db-index-usage) - shows information about the efficiency of indexes
-- [seq-scans](/docs/reference/cli/supabase-inspect-db-seq-scans) - show number of sequential scans recorded against all tables
-- [long-running-queries](/docs/reference/cli/supabase-inspect-db-long-running-queries) - shows long running queries that are executing right now
-- [outliers](/docs/reference/cli/supabase-inspect-db-outliers) - shows queries with high execution time but low call count and queries with high proportion of execution time spent on synchronous I/O
+- [`db-stats`](/docs/reference/cli/supabase-inspect-db-db-stats) - shows cache hit rates, total sizes, and WAL size
+- [`index-stats`](/docs/reference/cli/supabase-inspect-db-index-stats) - shows the size, usage percent, scan counts, and unused status for each index
+- [`calls`](/docs/reference/cli/supabase-inspect-db-calls) - shows queries ordered by how many times they were called
+- [`traffic-profile`](/docs/reference/cli/supabase-inspect-db-traffic-profile) - shows the read/write activity ratio for each table
+- [`long-running-queries`](/docs/reference/cli/supabase-inspect-db-long-running-queries) - shows long running queries that are executing right now
+- [`outliers`](/docs/reference/cli/supabase-inspect-db-outliers) - shows queries with high execution time but low call count and queries with high proportion of execution time spent on synchronous I/O
 
 #### Locks
 
-- [locks](/docs/reference/cli/supabase-inspect-db-locks) - shows statements which have taken out an exclusive lock on a relation
-- [blocking](/docs/reference/cli/supabase-inspect-db-blocking) - shows statements that are waiting for locks to be released
+- [`locks`](/docs/reference/cli/supabase-inspect-db-locks) - shows statements which have taken out an exclusive lock on a relation
+- [`blocking`](/docs/reference/cli/supabase-inspect-db-blocking) - shows statements that are waiting for locks to be released
 
 #### Connections
 
-- [role-connections](/docs/reference/cli/supabase-inspect-db-role-connections) - shows number of active connections for all database roles (Supabase-specific command)
-- [replication-slots](/docs/reference/cli/supabase-inspect-db-replication-slots) - shows information about replication slots on the database
+- [`role-stats`](/docs/reference/cli/supabase-inspect-db-role-stats) - shows information about roles on the database, including active connections
+- [`replication-slots`](/docs/reference/cli/supabase-inspect-db-replication-slots) - shows information about replication slots on the database
 
 ### Notes on `pg_stat_statements`
 
-Following commands require `pg_stat_statements` to be enabled: calls, locks, cache-hit, blocking, unused-indexes, index-usage, bloat, outliers, table-record-counts, replication-slots, seq-scans, vacuum-stats, long-running-queries.
+The `calls`, `outliers`, and `db-stats` commands require `pg_stat_statements` to be enabled.
 
 When using `pg_stat_statements` also take note that it only stores the latest 5,000 statements. Moreover, consider resetting the analysis after optimizing any queries by running `select pg_stat_statements_reset();`
 
