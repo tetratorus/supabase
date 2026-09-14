@@ -5,6 +5,7 @@ import AuthLayout from './AuthLayout'
 import { PageLayout } from '@/components/layouts/PageLayout/PageLayout'
 import { UnknownInterface } from '@/components/ui/UnknownInterface'
 import { useIsFeatureEnabled } from '@/hooks/misc/useIsFeatureEnabled'
+import { IS_PLATFORM } from '@/lib/constants'
 
 export const AuthProvidersLayout = ({ children }: PropsWithChildren<{}>) => {
   const { ref } = useParams()
@@ -12,6 +13,7 @@ export const AuthProvidersLayout = ({ children }: PropsWithChildren<{}>) => {
     'authentication:sign_in_providers',
     'authentication:third_party_auth',
   ])
+  const showSignInProviders = IS_PLATFORM && authenticationSignInProviders
 
   const navItems = [
     {
@@ -30,7 +32,7 @@ export const AuthProvidersLayout = ({ children }: PropsWithChildren<{}>) => {
 
   return (
     <AuthLayout title="Sign In / Providers">
-      {authenticationSignInProviders ? (
+      {showSignInProviders ? (
         <PageLayout
           title="Sign In / Providers"
           subtitle="Configure authentication providers and login methods for your users"
