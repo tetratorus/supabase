@@ -94,18 +94,49 @@ const ContentFile = ({ connectionStringPooler, deploymentMode }: StepContentProp
       code: envCode,
     },
     {
+      name: 'prisma.config.ts',
+      language: 'ts',
+      code: `
+import 'dotenv/config'
+import { defineConfig, env } from 'prisma/config'
+
+export default defineConfig({
+  schema: 'prisma/schema.prisma',
+  migrations: {
+    path: 'prisma/migrations',
+  },
+  datasource: {
+    // Prisma CLI (migrate, db push, studio) must not go through the transaction-mode pooler
+    url: env('DIRECT_URL'),
+  },
+})
+        `,
+    },
+    {
       name: 'prisma/schema.prisma',
       language: 'bash',
       code: `
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client"
+  output   = "../generated/prisma"
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "postgresql"
 }
+        `,
+    },
+    {
+      name: 'lib/prisma.ts',
+      language: 'ts',
+      code: `
+import { PrismaPg } from '@prisma/adapter-pg'
+import { PrismaClient } from '../generated/prisma/client'
+
+// Application traffic uses the pooled DATABASE_URL
+const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL })
+
+export const prisma = new PrismaClient({ adapter })
         `,
     },
   ]
