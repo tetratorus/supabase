@@ -788,7 +788,7 @@ The fields below are repeated for each provider. Substitute `<PROVIDER>` with on
 |---|---|---|---|---|
 | `PGRST_ADMIN_SERVER_HOST` | string | Self-hosted | Hostname for the PostgREST admin server. | Defaults to `server-host` value |
 | `PGRST_ADMIN_SERVER_PORT` | integer | Both | Port for the PostgREST admin server. The admin server is disabled unless a port is set, and it must differ from `PGRST_SERVER_PORT`. | No default (admin server disabled when unset) |
-| `PGRST_APP_SETTINGS_*` | string | Self-hosted | Arbitrary settings exposed to PostgreSQL via `current_setting('app.settings.<name>')`. The suffix after `PGRST_APP_SETTINGS_` becomes the setting name (case-insensitive). | Used for `PGRST_APP_SETTINGS_JWT_EXP` in self-hosted. Do not expose the JWT signing secret this way - it becomes readable by every database role |
+| `PGRST_APP_SETTINGS_*` | string | Self-hosted | Arbitrary settings exposed to PostgreSQL via `current_setting('app.settings.<name>')`. The suffix after `PGRST_APP_SETTINGS_` becomes the setting name (case-insensitive). | Used for `PGRST_APP_SETTINGS_JWT_EXP` in self-hosted. Do not expose the JWT signing secret this way: it becomes readable by every database role that can call `current_setting()` |
 | `PGRST_CLIENT_ERROR_VERBOSITY` | enum | Self-hosted | Controls verbosity of client-facing error responses. | Default: `verbose` (other value: `minimal`) |
 | `PGRST_DB_AGGREGATES_ENABLED` | boolean | Self-hosted | Allows the use of aggregate functions (`max`, `sum`, etc.) in queries. Disabled by default due to potential performance risks. | Default: `false` |
 | `PGRST_DB_ANON_ROLE` | string | Both | Database role used for unauthenticated requests. When unset, anonymous access is blocked. | No default |
@@ -1382,13 +1382,29 @@ The fields below are repeated for each provider. Substitute `<PROVIDER>` with on
 |---|---|---|---|---|
 | `JWT_EXP` | integer (seconds) | Both | Default JWT expiry (seconds) stored as `app.settings.jwt_exp` on the `postgres` database. Read by `volumes/db/jwt.sql`. | Sourced from `JWT_EXPIRY` in `.env.example` |
 
-Earlier versions also stored the signing secret as `app.settings.jwt_secret`, which let any role that can call `current_setting()` read it. Init scripts only run on an empty data directory, so a database created before this change keeps the setting until you remove it:
+#### Removal of `app.settings.jwt_secret`
+
+Earlier versions also stored the signing secret as `app.settings.jwt_secret`. Every database role that can call `current_setting()` could read it, including `anon` inside a `security definer` function, and mint arbitrary tokens.
+
+**Existing installs are not fixed by updating alone.** Init scripts only run against an empty data directory, so a database created before this change keeps the setting in its catalog. Remove it, then reconnect (open sessions keep the old value):
 
 ```sql
 alter database postgres reset "app.settings.jwt_secret";
 ```
 
 Rotate `JWT_SECRET` as well if untrusted roles had access to the database.
+
+**Breaking change for user-defined SQL.** Functions that sign tokens with `pgjwt`'s `sign()` and read the secret from the database, for example:
+
+```sql
+select sign(payload, current_setting('app.settings.jwt_secret'));
+```
+
+fail with `unrecognized configuration parameter` once the setting is gone. Sign tokens outside the database where possible, or pass the secret in explicitly from the caller. If a database-side secret is unavoidable, store it under your own setting name and restrict who can read it, rather than putting it back on a database-wide setting that every role can read:
+
+```sql
+alter role my_signing_role set "myapp.jwt_secret" to '<secret>';
+```
 
 ---
 

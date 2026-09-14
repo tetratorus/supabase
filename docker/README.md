@@ -91,6 +91,16 @@ Before deploying to production, you must:
 
 See the [main installation guide](https://supabase.com/docs/guides/self-hosting/docker) and the how-tos in the documentation.
 
+#### Removing `app.settings.jwt_secret` on existing installs
+
+Earlier versions stored the JWT signing secret as the `app.settings.jwt_secret` database setting, which every database role could read via `current_setting()`. The setting is no longer created, but init scripts only run against an empty data directory, so databases created earlier keep it. Remove it and reconnect:
+
+```sql
+alter database postgres reset "app.settings.jwt_secret";
+```
+
+Rotate `JWT_SECRET` as well if untrusted roles had access to the database. SQL that signs tokens with `current_setting('app.settings.jwt_secret')` stops working — see [CONFIG.md](./CONFIG.md#removal-of-appsettingsjwt_secret) for replacements.
+
 ## License
 
 This repository is licensed under the Apache 2.0 License. See the main [Supabase repository](https://github.com/supabase/supabase) for details.
