@@ -1382,6 +1382,14 @@ The fields below are repeated for each provider. Substitute `<PROVIDER>` with on
 |---|---|---|---|---|
 | `JWT_EXP` | integer (seconds) | Both | Default JWT expiry (seconds) stored as `app.settings.jwt_exp` on the `postgres` database. Read by `volumes/db/jwt.sql`. | Sourced from `JWT_EXPIRY` in `.env.example` |
 
+Earlier versions also stored the signing secret as `app.settings.jwt_secret`, which let any role that can call `current_setting()` read it. Init scripts only run on an empty data directory, so a database created before this change keeps the setting until you remove it:
+
+```sql
+alter database postgres reset "app.settings.jwt_secret";
+```
+
+Rotate `JWT_SECRET` as well if untrusted roles had access to the database.
+
 ---
 
 ## Supavisor
