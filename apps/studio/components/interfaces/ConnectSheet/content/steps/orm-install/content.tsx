@@ -3,7 +3,11 @@ import { CodeBlock } from 'ui-patterns/CodeBlock'
 import type { StepContentProps } from '@/components/interfaces/ConnectSheet/Connect.types'
 
 const ORM_INSTALL_COMMANDS: Record<string, string[]> = {
-  prisma: ['npm install prisma --save-dev', 'npx prisma init'],
+  prisma: [
+    'npm install prisma --save-dev',
+    'npm install @prisma/client @prisma/adapter-pg dotenv',
+    'npx prisma init',
+  ],
   drizzle: ['npm install drizzle-orm', 'npm install drizzle-kit --save-dev'],
 }
 
