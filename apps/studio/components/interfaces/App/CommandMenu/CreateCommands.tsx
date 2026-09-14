@@ -211,12 +211,16 @@ export function useCreateCommands(options?: CommandOptions) {
     () =>
       edgeFunctionsEnabled
         ? ([
-            {
-              id: 'create-edge-function-editor',
-              name: 'Create Edge Function via Editor',
-              route: `/project/${ref}/functions/new`,
-              icon: () => <EdgeFunctions />,
-            },
+            ...(IS_PLATFORM
+              ? [
+                  {
+                    id: 'create-edge-function-editor',
+                    name: 'Create Edge Function via Editor',
+                    route: `/project/${ref}/functions/new`,
+                    icon: () => <EdgeFunctions />,
+                  },
+                ]
+              : []),
             {
               id: 'create-edge-function-cli',
               name: 'Create Edge Function via CLI',
