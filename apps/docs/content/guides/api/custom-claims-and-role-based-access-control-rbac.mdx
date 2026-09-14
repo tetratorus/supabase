@@ -51,11 +51,29 @@ create table public.role_permissions (
   unique (role, permission)
 );
 comment on table public.role_permissions is 'Application permissions for each role.';
+
+-- Secure the tables
+alter table public.user_roles enable row level security;
+alter table public.role_permissions enable row level security;
+
+revoke all
+  on table public.role_permissions
+  from authenticated, anon, public;
 ```
+
+Both tables decide what a user is allowed to do, so clients must not read or write them through the [data APIs](/docs/guides/api). With Row Level Security enabled, `anon` and `authenticated` are denied access because no policy grants it to them. The only policy these tables need is the one for `supabase_auth_admin` in the Auth Hook migration below.
+
+The `authorize` function you create later still reads `role_permissions`, because it runs as its owner and a table's owner is exempt from RLS by default. Create these objects as the role that owns the tables, and don't add `force row level security`, or `authorize` returns `false` for every user.
+
+<Admonition type="caution">
+
+Apply the Auth Hook migration below in the same deployment. The hook reads `user_roles` as `supabase_auth_admin`, and until that migration grants it access, the hook silently issues tokens with a `null` `user_role`, so every `authorize` check fails.
+
+</Admonition>
 
 <Admonition type="note">
 
-For the [full schema](https://github.com/supabase/supabase/blob/master/examples/slack-clone/nextjs-slack-clone/README.md), see the example application on [GitHub](https://github.com/supabase/supabase/tree/master/examples/slack-clone/nextjs-slack-clone).
+For the [full schema](https://github.com/supabase/supabase/blob/master/examples/slack-clone/nextjs-slack-clone/README.md), see the example application on [GitHub](https://github.com/supabase/supabase/tree/master/examples/slack-clone/nextjs-slack-clone). That schema also adds a policy letting each user read their own `user_roles` row, which is an acceptable variation if your application needs it.
 
 </Admonition>
 
@@ -72,6 +90,8 @@ values
 ## Create Auth Hook to apply user role
 
 The [Custom Access Token Auth Hook](/docs/guides/auth/auth-hooks/custom-access-token-hook) runs before a token is issued. You can use it to edit the JWT.
+
+The hook runs as `supabase_auth_admin`, so the migration below grants that role access to `user_roles` and adds a policy allowing it to read the table.
 
 <Tabs
   scrollable
