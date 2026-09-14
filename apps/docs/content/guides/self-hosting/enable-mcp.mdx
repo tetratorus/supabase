@@ -248,3 +248,12 @@ If you are unable to connect to the MCP server:
 1. Confirm the Docker bridge gateway IP is correctly added to the API gateway configuration
 2. Check the API gateway's logs for errors: `docker compose logs api-gw`
 3. Make sure your SSH tunnel is active
+
+Read-only tools (for example `list_tables`, or any tool when the MCP server runs with `read_only=true`) connect as `supabase_read_only_user` using the dedicated `POSTGRES_PASSWORD_READ_ONLY` secret. This role can read every table and bypasses Row Level Security, so it must not reuse `POSTGRES_PASSWORD`. If tools fail with `Read-only database access is not configured`, set `POSTGRES_PASSWORD_READ_ONLY` in your `.env` file (`utils/generate-keys.sh` generates one for new installations) and recreate the containers.
+
+If tools fail with `password authentication failed for user "supabase_read_only_user"`, the role's password in the database does not match `POSTGRES_PASSWORD_READ_ONLY`. This happens on installations created before this variable existed, because the database init scripts only run on first start. Set it manually:
+
+```sh
+docker compose exec db psql -U supabase_admin -d postgres \
+  -c "ALTER USER supabase_read_only_user WITH PASSWORD '<your POSTGRES_PASSWORD_READ_ONLY>';"
+```

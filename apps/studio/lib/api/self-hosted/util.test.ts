@@ -91,13 +91,26 @@ describe('api/self-hosted/util', () => {
       vi.stubEnv('POSTGRES_PORT', '5433')
       vi.stubEnv('POSTGRES_DB', 'mydb')
       vi.stubEnv('POSTGRES_PASSWORD', 'secret')
+      vi.stubEnv('POSTGRES_PASSWORD_READ_ONLY', 'ro-secret')
       vi.stubEnv('POSTGRES_USER_READ_ONLY', 'readonly_user')
 
       const { getConnectionString } = await import('./util')
 
       const result = getConnectionString({ readOnly: true })
 
-      expect(result).toBe('postgresql://readonly_user:secret@db.example.com:5433/mydb')
+      expect(result).toBe('postgresql://readonly_user:ro-secret@db.example.com:5433/mydb')
+    })
+
+    it('should throw when read-only password is not configured', async () => {
+      vi.stubEnv('POSTGRES_PASSWORD', 'secret')
+      vi.stubEnv('POSTGRES_PASSWORD_READ_ONLY', '')
+
+      const { getConnectionString, READ_ONLY_PASSWORD_NOT_CONFIGURED_MESSAGE } =
+        await import('./util')
+
+      expect(() => getConnectionString({ readOnly: true })).toThrow(
+        READ_ONLY_PASSWORD_NOT_CONFIGURED_MESSAGE
+      )
     })
 
     it('should use default values when env vars not set', async () => {
@@ -105,6 +118,7 @@ describe('api/self-hosted/util', () => {
       vi.stubEnv('POSTGRES_PORT', '')
       vi.stubEnv('POSTGRES_DB', '')
       vi.stubEnv('POSTGRES_PASSWORD', '')
+      vi.stubEnv('POSTGRES_PASSWORD_READ_ONLY', 'ro-secret')
       vi.stubEnv('POSTGRES_USER_READ_WRITE', '')
       vi.stubEnv('POSTGRES_USER_READ_ONLY', '')
 
@@ -114,7 +128,7 @@ describe('api/self-hosted/util', () => {
       const resultReadOnly = getConnectionString({ readOnly: true })
 
       expect(resultReadWrite).toBe('postgresql://supabase_admin:postgres@db:5432/postgres')
-      expect(resultReadOnly).toBe('postgresql://supabase_read_only_user:postgres@db:5432/postgres')
+      expect(resultReadOnly).toBe('postgresql://supabase_read_only_user:ro-secret@db:5432/postgres')
     })
   })
 })

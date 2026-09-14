@@ -12,8 +12,9 @@
 # - POSIX shell compatibility
 # - No hardcoded values for database service and admin user
 # - Use .env for the admin user and database service port
-# - Does _not_ set password for supabase_read_only_user (this role is not
-#   supposed to have a password)
+# - Sets a separate password for supabase_read_only_user (used by the local
+#   MCP server in read-only mode) only when POSTGRES_PASSWORD_READ_ONLY is
+#   present in .env; this role must not share the main password
 # - Print all values and confirm before updating
 # - Stop on any errors
 #
@@ -39,6 +40,7 @@ new_passwd="$(openssl rand -hex 16)"
 # If replacing with a custom password, avoid using @/?#:&
 # https://supabase.com/docs/guides/database/postgres/roles#passwords
 # new_passwd="d0notUseSpecialSymbolsForPq123-"
+new_ro_passwd="$(openssl rand -hex 16)"
 
 # Check Postgres service
 db_image_prefix="supabase.postgres:"
@@ -92,6 +94,12 @@ if ! test -t 0; then
 fi
 
 echo "New database password: $new_passwd"
+
+update_ro_passwd=false
+if grep -q "^POSTGRES_PASSWORD_READ_ONLY=" .env; then
+    update_ro_passwd=true
+    echo "New read-only database password: $new_ro_passwd"
+fi
 echo ""
 
 printf "Update database passwords? (y/N) "
@@ -147,8 +155,19 @@ END
 \$\$;
 EOF
 
+if [ "$update_ro_passwd" = "true" ]; then
+    docker compose exec -T "$db_srv_name" psql -U "$db_admin_user" -d "_supabase" -v ON_ERROR_STOP=1 <<EOF
+alter user supabase_read_only_user with password '${new_ro_passwd}';
+EOF
+fi
+
 echo "Updating POSTGRES_PASSWORD in .env..."
 sed -i.old "s|^POSTGRES_PASSWORD=.*$|POSTGRES_PASSWORD=$new_passwd|" .env
+
+if [ "$update_ro_passwd" = "true" ]; then
+    echo "Updating POSTGRES_PASSWORD_READ_ONLY in .env..."
+    sed -i.old "s|^POSTGRES_PASSWORD_READ_ONLY=.*$|POSTGRES_PASSWORD_READ_ONLY=$new_ro_passwd|" .env
+fi
 
 echo ""
 echo "Success. To update and restart containers use:"

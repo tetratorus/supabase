@@ -93,9 +93,11 @@ echo "MINIO_ROOT_PASSWORD=${minio_root_password}"
 echo ""
 
 postgres_password=$(gen_hex 16)
+postgres_password_read_only=$(gen_hex 16)
 dashboard_password=$(gen_hex 16)
 
 echo "POSTGRES_PASSWORD=${postgres_password}"
+echo "POSTGRES_PASSWORD_READ_ONLY=${postgres_password_read_only}"
 echo "DASHBOARD_PASSWORD=${dashboard_password}"
 echo ""
 
@@ -134,5 +136,6 @@ sed \
     -e "s|^S3_PROTOCOL_ACCESS_KEY_SECRET=.*$|S3_PROTOCOL_ACCESS_KEY_SECRET=${s3_protocol_access_key_secret}|" \
     -e "s|^MINIO_ROOT_PASSWORD=.*$|MINIO_ROOT_PASSWORD=${minio_root_password}|" \
     -e "s|^POSTGRES_PASSWORD=.*$|POSTGRES_PASSWORD=${postgres_password}|" \
+    -e "s|^POSTGRES_PASSWORD_READ_ONLY=.*$|POSTGRES_PASSWORD_READ_ONLY=${postgres_password_read_only}|" \
     -e "s|^DASHBOARD_PASSWORD=.*$|DASHBOARD_PASSWORD=${dashboard_password}|" \
     .env

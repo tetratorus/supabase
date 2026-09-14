@@ -5,6 +5,7 @@ import {
   POSTGRES_DATABASE,
   POSTGRES_HOST,
   POSTGRES_PASSWORD,
+  POSTGRES_PASSWORD_READ_ONLY,
   POSTGRES_PORT,
   POSTGRES_USER_READ_ONLY,
   POSTGRES_USER_READ_WRITE,
@@ -24,8 +25,16 @@ export function encryptString(stringToEncrypt: string): string {
   return crypto.AES.encrypt(stringToEncrypt, ENCRYPTION_KEY).toString()
 }
 
-export function getConnectionString({ readOnly }: { readOnly: boolean }) {
-  const postgresUser = readOnly ? POSTGRES_USER_READ_ONLY : POSTGRES_USER_READ_WRITE
+export const READ_ONLY_PASSWORD_NOT_CONFIGURED_MESSAGE =
+  'Read-only database access is not configured. Set POSTGRES_PASSWORD_READ_ONLY to a password for the read-only role to enable it.'
 
-  return `postgresql://${postgresUser}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DATABASE}`
+export function getConnectionString({ readOnly }: { readOnly: boolean }) {
+  if (readOnly) {
+    if (!POSTGRES_PASSWORD_READ_ONLY) {
+      throw new Error(READ_ONLY_PASSWORD_NOT_CONFIGURED_MESSAGE)
+    }
+    return `postgresql://${POSTGRES_USER_READ_ONLY}:${POSTGRES_PASSWORD_READ_ONLY}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DATABASE}`
+  }
+
+  return `postgresql://${POSTGRES_USER_READ_WRITE}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DATABASE}`
 }
