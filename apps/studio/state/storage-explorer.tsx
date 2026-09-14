@@ -38,7 +38,7 @@ import { configKeys } from '@/data/config/keys'
 import { useProjectApiUrl } from '@/data/config/project-endpoint-query'
 import type { ProjectStorageConfigResponse } from '@/data/config/project-storage-config-query'
 import { getQueryClient } from '@/data/query-client'
-import { deleteBucketObject } from '@/data/storage/bucket-object-delete-mutation'
+import { deleteBucketObject, getUndeletedPaths } from '@/data/storage/bucket-object-delete-mutation'
 import { signBucketObjects } from '@/data/storage/bucket-object-sign-mutation'
 import { listBucketObjects, StorageObject } from '@/data/storage/bucket-objects-list-mutation'
 import { deleteBucketPrefix } from '@/data/storage/bucket-prefix-delete-mutation'
@@ -1462,11 +1462,18 @@ function createStorageExplorerState({
       const toastId = toast.loading(`Deleting ${prefixes.length} file(s)...`)
 
       try {
-        await deleteBucketObject({
+        const data = await deleteBucketObject({
           projectRef: state.projectRef,
           bucketId: state.selectedBucket.id,
           paths: prefixes,
         })
+
+        const undeletedPaths = getUndeletedPaths(prefixes, data)
+        if (undeletedPaths.length > 0) {
+          throw new Error(
+            `${undeletedPaths.length} of ${prefixes.length} file(s) were not deleted. Check the bucket's storage policies.`
+          )
+        }
 
         if (!isDeleteFolder) {
           // If parent folders are empty, reinstate .emptyFolderPlaceholder to persist them
@@ -1506,6 +1513,8 @@ function createStorageExplorerState({
               state.updateRowStatus({ name, status: STORAGE_ROW_STATUS.READY, columnIndex })
             })
           }
+
+          await state.refetchAllOpenedFolders()
         } else {
           toast.dismiss(toastId)
           throw err
