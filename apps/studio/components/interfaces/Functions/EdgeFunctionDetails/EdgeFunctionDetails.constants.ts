@@ -17,13 +17,18 @@ export const INVOCATION_TABS: InvocationTab[] = [
     label: 'cURL',
     language: 'bash',
     code: ({ showKey, functionUrl, apiKey }) => {
-      const obfuscatedName = apiKey.includes('publishable')
-        ? 'SUPABASE_PUBLISHABLE_KEY'
-        : 'SUPABASE_ANON_KEY'
+      const isPublishableKey = apiKey.includes('publishable')
+      const obfuscatedName = isPublishableKey ? 'SUPABASE_PUBLISHABLE_KEY' : 'SUPABASE_ANON_KEY'
       const keyValue = showKey ? apiKey : obfuscatedName
 
+      // Publishable keys are not JWTs, so they go on `apikey`. Legacy anon keys are JWTs and are
+      // still sent as a bearer token. https://supabase.com/docs/guides/functions/auth-headers
+      const keyHeader = isPublishableKey
+        ? `  -H 'apikey: ${keyValue}' \\`
+        : `  -H 'Authorization: Bearer ${keyValue}' \\`
+
       return `curl -L -X POST '${functionUrl}' \\
-  -H 'Authorization: Bearer ${keyValue}' \\${apiKey.includes('publishable') ? `\n  -H 'apikey: ${keyValue}' \\` : ''}
+${keyHeader}
   -H 'Content-Type: application/json' \\
   --data '{"name":"Functions"}'`
     },
