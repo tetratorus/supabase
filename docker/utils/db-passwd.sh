@@ -12,8 +12,8 @@
 # - POSIX shell compatibility
 # - No hardcoded values for database service and admin user
 # - Use .env for the admin user and database service port
-# - Does _not_ set password for supabase_read_only_user (this role is not
-#   supposed to have a password)
+# - Also sets password for supabase_read_only_user (used by the local MCP
+#   server in read-only mode)
 # - Print all values and confirm before updating
 # - Stop on any errors
 #
@@ -119,6 +119,7 @@ alter user service_role with password '${new_passwd}';
 alter user supabase_admin with password '${new_passwd}';
 alter user supabase_auth_admin with password '${new_passwd}';
 alter user supabase_functions_admin with password '${new_passwd}';
+alter user supabase_read_only_user with password '${new_passwd}';
 alter user supabase_replication_admin with password '${new_passwd}';
 alter user supabase_storage_admin with password '${new_passwd}';
 
